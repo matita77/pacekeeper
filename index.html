@@ -1,0 +1,1637 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#EDF0F4"><meta name="apple-mobile-web-app-capable" content="yes"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Pacekeeper</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>/* Layout: single phone-width column; sticky header, bottom tab bar, bottom sheets, full-screen run mode. */
+:root {
+  --bg: #EDF0F4; --surface: #FFFFFF; --surface-2: #F5F7FA; --ink: #101622; --ink-2: #384254; --muted: #677285; --line: #D8DEE7;
+  --accent: #2741D3; --accent-ink: #FFFFFF; --accent-soft: #E2E6FA;
+  --good: #1B8F52; --warn: #B87A0B; --bad: #C93C3C; --good-soft: #DFF3E7; --warn-soft: #FBF0D9;
+  --z-walk: #A7B1BF; --z-recovery: #7C98B2; --z-easy: #1A9686; --z-long: #2B78C2; --z-marathon: #6A50D4; --z-half: #9B45C2;
+  --z-threshold: #D18E12; --z-tenk: #DE6C26; --z-fivek: #DD5527; --z-interval: #D6452A; --z-effort: #C2452E; --z-rep: #BF2C60;
+  --ph-base: var(--z-easy); --ph-build: var(--z-threshold); --ph-peak: var(--z-interval); --ph-taper: var(--z-long);
+  --shadow: 0 1px 2px rgba(16,22,34,.06), 0 6px 20px rgba(16,22,34,.06);
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0B0F15; --surface: #141A23; --surface-2: #1A212C; --ink: #E8ECF2; --ink-2: #C0C8D5; --muted: #8B96A7; --line: #263041;
+  --accent: #8E9DFF; --accent-ink: #0B0F15; --accent-soft: #1D2547;
+  --good: #47C27F; --warn: #E9B44A; --bad: #EE6B6B; --good-soft: #15301F; --warn-soft: #33290F;
+  --z-walk: #6E7989; --z-recovery: #8FAAC4; --z-easy: #33BBA9; --z-long: #4F99E4; --z-marathon: #8B76EF; --z-half: #BA69DE;
+  --z-threshold: #EFAD33; --z-tenk: #F38945; --z-fivek: #F26E46; --z-interval: #F0603F; --z-effort: #E2644B; --z-rep: #E25386;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0B0F15; --surface: #141A23; --surface-2: #1A212C; --ink: #E8ECF2; --ink-2: #C0C8D5; --muted: #8B96A7; --line: #263041;
+  --accent: #8E9DFF; --accent-ink: #0B0F15; --accent-soft: #1D2547;
+  --good: #47C27F; --warn: #E9B44A; --bad: #EE6B6B; --good-soft: #15301F; --warn-soft: #33290F;
+  --z-walk: #6E7989; --z-recovery: #8FAAC4; --z-easy: #33BBA9; --z-long: #4F99E4; --z-marathon: #8B76EF; --z-half: #BA69DE;
+  --z-threshold: #EFAD33; --z-tenk: #F38945; --z-fivek: #F26E46; --z-interval: #F0603F; --z-effort: #E2644B; --z-rep: #E25386;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--f-body); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.num, .tnum { font-variant-numeric: tabular-nums; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+.app { max-width: 520px; margin: 0 auto; min-height: 100%; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px 10px; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 22px; letter-spacing: .02em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.brand svg { width: 22px; height: 22px; }
+.top .meta { font-size: 13px; color: var(--muted); text-align: right; }
+main { display: grid; gap: 14px; }
+
+/* Bottom tabs */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line);
+  padding: 6px max(16px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.tabs .in { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
+.tab { background: none; border: 0; display: grid; justify-items: center; gap: 2px; padding: 6px 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+.tab svg { width: 22px; height: 22px; }
+.tab[aria-current="page"] { color: var(--accent); }
+
+/* Generic blocks */
+.card { background: var(--surface); border-radius: var(--r); padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.h-display { font-family: var(--f-display); font-weight: 700; line-height: 1.02; letter-spacing: .005em; }
+.muted { color: var(--muted); }
+.row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.row.between { justify-content: space-between; }
+.stack { display: grid; gap: 10px; }
+.btn { border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 700; background: var(--surface-2); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); }
+.btn.block { width: 100%; }
+.btn.sm { min-height: 36px; padding: 8px 12px; font-size: 14px; border-radius: 10px; }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.btns > .btn { flex: 1 1 auto; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.zbar { width: 4px; align-self: stretch; border-radius: 4px; flex: none; }
+.banner { border-radius: var(--r); padding: 12px 14px; background: var(--accent-soft); display: flex; gap: 12px; align-items: center; justify-content: space-between; font-size: 14px; }
+.banner.warn { background: var(--warn-soft); }
+.banner.good { background: var(--good-soft); }
+.banner b { font-weight: 700; }
+.sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.sec-h h2 { font-family: var(--f-display); font-size: 22px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; }
+.link { background: none; border: 0; color: var(--accent); font-weight: 700; padding: 4px 0; }
+
+/* Week strip */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.day { border: 0; background: transparent; border-radius: 12px; padding: 8px 0 7px; display: grid; justify-items: center; gap: 3px; color: var(--ink); }
+.day .wd { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .06em; }
+.day .dn { font-family: var(--f-display); font-size: 20px; font-weight: 600; line-height: 1; }
+.day .mk { height: 14px; display: flex; align-items: center; justify-content: center; }
+.day .mk .dot { width: 8px; height: 8px; }
+.day.today .dn { color: var(--accent); }
+.day[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow); }
+.mk .ck { width: 14px; height: 14px; color: var(--good); }
+.mk .x { width: 12px; height: 12px; color: var(--muted); }
+
+/* Workout hero */
+.hero { display: grid; gap: 12px; position: relative; overflow: hidden; }
+.hero .t { font-size: 34px; text-transform: uppercase; }
+.stats { display: flex; gap: 18px; flex-wrap: wrap; }
+.stat .v { font-family: var(--f-display); font-size: 26px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+.stat .l { font-size: 12px; color: var(--muted); font-weight: 600; }
+.prof { width: 100%; height: 56px; display: block; }
+.prof.lg { height: 84px; }
+.prof rect { shape-rendering: crispEdges; }
+
+/* Lists */
+.list { display: grid; }
+.item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); background: none; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; text-align: left; color: var(--ink); }
+.list > .item:first-child { border-top: 0; }
+.item .when { width: 44px; flex: none; }
+.item .when .wd { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.item .when .dn { font-family: var(--f-display); font-size: 20px; font-weight: 600; line-height: 1.05; }
+.item .body { flex: 1; min-width: 0; }
+.item .ttl { font-weight: 700; }
+.item .sub { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .end { text-align: right; flex: none; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; }
+.item .end .st { font-size: 12px; font-weight: 700; }
+.st.done { color: var(--good); } .st.missed { color: var(--bad); } .st.skipped { color: var(--muted); } .st.today { color: var(--accent); }
+.item.is-done .ttl, .item.is-skipped .ttl { color: var(--ink-2); }
+
+/* Progress */
+.bar { height: 8px; border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 8px; }
+
+/* Plan chart */
+.chart { width: 100%; display: block; }
+.chart text { fill: var(--muted); font-size: 10px; font-family: var(--f-body); font-weight: 600; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .now { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.phases { display: flex; height: 10px; border-radius: 6px; overflow: hidden; gap: 2px; }
+.phases i { display: block; height: 100%; }
+
+details.wk { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); }
+details.wk > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+details.wk > summary::-webkit-details-marker { display: none; }
+details.wk .wn { font-family: var(--f-display); font-size: 24px; font-weight: 700; width: 34px; line-height: 1; }
+details.wk .wbody { padding: 0 16px 6px; }
+details.wk[open] .chev { transform: rotate(180deg); }
+.chev { width: 18px; height: 18px; color: var(--muted); transition: transform .2s; flex: none; }
+
+/* Pace table */
+.zrow { display: grid; grid-template-columns: 4px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.zrow:first-child { border-top: 0; }
+.zrow .zn { font-weight: 700; }
+.zrow .zd { font-size: 13px; color: var(--muted); }
+.zrow .zp { font-family: var(--f-display); font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.zrow .zp small { font-family: var(--f-body); font-size: 12px; color: var(--muted); font-weight: 600; }
+.preds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.pred { background: var(--surface-2); border-radius: 12px; padding: 10px; min-width: 0; }
+.pred .l { font-size: 11.5px; color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.pred .v { font-family: var(--f-display); font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.score { font-family: var(--f-display); font-size: 64px; font-weight: 700; line-height: .9; font-variant-numeric: tabular-nums; }
+
+/* Forms */
+.field { display: grid; gap: 6px; }
+.field > label, .lbl { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.input, select.input { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 11px 12px; min-height: 46px; }
+.time3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.time3 .u { position: relative; }
+.time3 .u span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--muted); pointer-events: none; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; border-radius: 9px; padding: 9px 6px; font-weight: 700; font-size: 14px; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.opts { display: grid; gap: 10px; }
+.opt { border: 1.5px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 14px 16px; text-align: left; display: flex; gap: 14px; align-items: center; color: var(--ink); }
+.opt[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.opt .big { font-family: var(--f-display); font-size: 30px; font-weight: 700; width: 74px; flex: none; line-height: 1; text-transform: uppercase; }
+.opt .ot { font-weight: 700; }
+.opt .od { font-size: 13px; color: var(--muted); }
+.days7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.days7 button { border: 1.5px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 0; font-weight: 700; font-size: 13px; }
+.days7 button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.toggle:first-child { border-top: 0; }
+.switch { appearance: none; width: 46px; height: 28px; border-radius: 28px; background: var(--line); position: relative; flex: none; cursor: pointer; transition: background .15s; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.switch:checked { background: var(--accent); }
+.switch:checked::after { transform: translateX(18px); }
+
+/* Sheets */
+.scrim { position: fixed; inset: 0; background: rgba(8,12,18,.45); z-index: 20; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; display: flex; justify-content: center; pointer-events: none; }
+.sheet .panel { pointer-events: auto; width: 100%; max-width: 560px; max-height: 90vh; overflow: auto; background: var(--bg); border-radius: 20px 20px 0 0;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 14px; animation: up .22s ease-out; }
+.grab { width: 40px; height: 5px; border-radius: 5px; background: var(--line); justify-self: center; }
+.sheet-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sheet-h h2 { font-family: var(--f-display); font-size: 30px; font-weight: 700; text-transform: uppercase; line-height: 1; }
+.x-btn { border: 0; background: var(--surface-2); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.x-btn svg { width: 18px; height: 18px; }
+@keyframes up { from { transform: translateY(24px); opacity: .6; } }
+@media (prefers-reduced-motion: reduce) { .sheet .panel { animation: none; } .chev { transition: none; } }
+
+.steps { display: grid; gap: 8px; }
+.stp { display: flex; gap: 12px; align-items: stretch; background: var(--surface); border-radius: 12px; padding: 10px 12px; }
+.stp .sb { flex: 1; min-width: 0; }
+.stp .sn { font-weight: 700; }
+.stp .sd { font-size: 13px; color: var(--muted); }
+.stp .sv { font-family: var(--f-display); font-size: 20px; font-weight: 600; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; align-self: center; }
+.rep { border: 1.5px dashed var(--line); border-radius: 14px; padding: 8px; display: grid; gap: 6px; }
+.rep > .rh { font-family: var(--f-display); font-size: 18px; font-weight: 700; text-transform: uppercase; padding: 2px 4px; display: flex; justify-content: space-between; }
+.note { font-size: 14px; color: var(--ink-2); background: var(--surface); border-radius: 12px; padding: 12px 14px; }
+pre.code { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 12px; line-height: 1.5; overflow: auto; max-height: 42vh; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; white-space: pre; }
+table.splits { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+table.splits th { text-align: left; font-size: 11.5px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; font-weight: 700; padding: 6px 4px; }
+table.splits td { padding: 7px 4px; border-top: 1px solid var(--line); }
+table.splits td.r, table.splits th.r { text-align: right; }
+.ok { color: var(--good); font-weight: 700; } .fast { color: var(--warn); font-weight: 700; } .slow { color: var(--bad); font-weight: 700; }
+.tbl-wrap { overflow-x: auto; }
+.rpe { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.rpe button { border: 0; border-radius: 8px; padding: 10px 0; font-weight: 700; background: var(--surface); font-variant-numeric: tabular-nums; }
+.rpe button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+/* Onboarding */
+.ob { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow: auto; }
+.ob .in { max-width: 520px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; gap: 18px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.ob .prog { display: grid; grid-auto-flow: column; gap: 4px; }
+.ob .prog i { height: 4px; border-radius: 4px; background: var(--line); }
+.ob .prog i.on { background: var(--accent); }
+.ob h1 { font-family: var(--f-display); font-size: 40px; line-height: .98; font-weight: 700; text-transform: uppercase; }
+.ob .lead { color: var(--ink-2); margin: -6px 0 0; }
+.ob .foot { margin-top: auto; display: flex; gap: 10px; position: sticky; bottom: 0; padding-top: 10px; background: var(--bg); }
+.ob .foot .btn.primary { flex: 1; }
+.check { font-size: 14px; border-radius: 12px; padding: 12px 14px; background: var(--surface); display: grid; gap: 4px; }
+.check.warn { background: var(--warn-soft); }
+.check.good { background: var(--good-soft); }
+.summary-big { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.building { display: grid; place-items: center; gap: 14px; text-align: center; padding: 40px 0; }
+
+/* Run mode */
+.run { position: fixed; inset: 0; z-index: 40; background: var(--bg); overflow: auto; }
+.run .in { max-width: 520px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; gap: 14px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.cur { border-radius: 18px; padding: 16px; color: #fff; display: grid; gap: 6px; position: relative; overflow: hidden; }
+.cur .lab { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .92; }
+.cur .big { font-family: var(--f-display); font-size: 76px; font-weight: 700; line-height: .9; font-variant-numeric: tabular-nums; }
+.cur .tgt { font-family: var(--f-display); font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cur .rem { position: absolute; left: 0; bottom: 0; height: 5px; background: rgba(255,255,255,.75); }
+.live { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.live .card { padding: 12px 14px; }
+.live .v { font-family: var(--f-display); font-size: 40px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.live .l { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.gauge { position: relative; height: 34px; border-radius: 10px; background: var(--surface-2); overflow: hidden; }
+.gauge .band { position: absolute; top: 0; bottom: 0; background: var(--good-soft); border-left: 2px solid var(--good); border-right: 2px solid var(--good); }
+.gauge .pin { position: absolute; top: 3px; bottom: 3px; width: 6px; margin-left: -3px; border-radius: 4px; background: var(--ink); transition: left .4s; }
+.gauge .gl { position: absolute; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: var(--muted); }
+.timeline { display: flex; gap: 2px; height: 10px; }
+.timeline i { display: block; height: 100%; border-radius: 3px; opacity: .35; }
+.timeline i.past { opacity: 1; } .timeline i.now { opacity: 1; outline: 2px solid var(--ink); outline-offset: 1px; }
+.ctrl { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 10px; margin-top: auto; }
+.ctrl .btn { min-height: 60px; font-size: 16px; }
+.mode { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--surface); }
+.mode.sim { background: var(--warn-soft); }
+.count { font-family: var(--f-display); font-size: 160px; font-weight: 700; text-align: center; line-height: 1; padding: 60px 0; }
+.confirm { display: grid; gap: 10px; background: var(--surface); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 50; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 14px; max-width: calc(100% - 32px); text-align: center; }
+
+@media (max-width: 380px) {
+  .preds { grid-template-columns: repeat(2, 1fr); }
+  .hero .t { font-size: 30px; }
+  .cur .big { font-size: 64px; }
+}
+</style>
+<div class="app">
+  <header class="top"><div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3.5-3.5M10 2h4M12 2v3"/></svg>Pacekeeper</div><div class="meta" id="topmeta"></div></header>
+  <main id="view"></main>
+</div>
+<nav class="tabs" aria-label="Sections"><div class="in">
+  <button class="tab" data-a="tab" data-view="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="4.5" r="1.8"/><path d="M8 21l3-6 3 3v3M6 12l3-4 4 1 3 4 3 1"/></svg>Today</button>
+  <button class="tab" data-a="tab" data-view="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Plan</button>
+  <button class="tab" data-a="tab" data-view="paces"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>Paces</button>
+  <button class="tab" data-a="tab" data-view="you"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>You</button>
+</div></nav>
+<div id="sheet" hidden></div>
+<div id="onboard" class="ob" hidden></div>
+<div id="run" class="run" hidden></div>
+<div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+<script>/* ============================================================
+   Pacekeeper plan engine — pure functions, no DOM.
+   Units: distance in metres, time in seconds, pace in sec/km.
+   Ports 1:1 to Swift (struct Profile, enum Zone, struct Step…).
+   ============================================================ */
+const Engine = (() => {
+  const DIST = { '5k': 5000, '10k': 10000, half: 21097.5, marathon: 42195 };
+  const DIST_LABEL = { '5k': '5K', '10k': '10K', half: 'Half marathon', marathon: 'Marathon' };
+  const DAY = 86400000;
+
+  /* ---------- VDOT (Daniels/Gilbert oxygen-cost model) ---------- */
+  const vo2 = v => -4.6 + 0.182258 * v + 0.000104 * v * v;           // v in m/min
+  const pctMax = t => 0.8 + 0.1894393 * Math.exp(-0.012778 * t) + 0.2989558 * Math.exp(-0.1932605 * t); // t in min
+  function vdotFromRace(meters, seconds) {
+    const t = seconds / 60, v = meters / t;
+    return vo2(v) / pctMax(t);
+  }
+  function raceTime(vdot, meters) {                                    // seconds
+    let lo = 1, hi = 900;
+    for (let i = 0; i < 60; i++) {
+      const t = (lo + hi) / 2;
+      vo2(meters / t) / pctMax(t) > vdot ? (lo = t) : (hi = t);
+    }
+    return lo * 60;
+  }
+  function paceAtPct(pct, vdot) {                                      // sec/km
+    const a = 0.000104, b = 0.182258, c = -4.6 - pct * vdot;
+    const v = (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
+    return 60000 / v;
+  }
+
+  /* ---------- Zones ---------- */
+  const ZONES = {
+    recovery:  { label: 'Recovery',  short: 'REC', rank: 0 },
+    easy:      { label: 'Easy',      short: 'E',   rank: 1 },
+    long:      { label: 'Long',      short: 'L',   rank: 1 },
+    marathon:  { label: 'Marathon pace', short: 'M', rank: 2 },
+    half:      { label: 'Half pace', short: 'HM',  rank: 3 },
+    threshold: { label: 'Threshold', short: 'T',   rank: 3 },
+    tenk:      { label: '10K pace',  short: '10K', rank: 4 },
+    fivek:     { label: '5K pace',   short: '5K',  rank: 4 },
+    interval:  { label: 'Interval',  short: 'I',   rank: 4 },
+    rep:       { label: 'Repetition', short: 'R',  rank: 5 },
+    effort:    { label: 'Hard effort', short: 'H', rank: 4 },
+    walk:      { label: 'Walk',      short: 'W',   rank: -1 },
+  };
+  function paceZones(vdot) {
+    const rp = m => raceTime(vdot, m) / (m / 1000);
+    const band = (p, w) => [p - w, p + w];
+    const eFast = paceAtPct(0.71, vdot), eSlow = paceAtPct(0.63, vdot);
+    return {
+      recovery: [eSlow, eSlow + 35],
+      easy: [eFast, eSlow],
+      long: [eFast + 5, eSlow],
+      marathon: band(rp(42195), 5),
+      half: band(rp(21097.5), 4),
+      threshold: band(paceAtPct(0.88, vdot), 4),
+      tenk: band(rp(10000), 4),
+      fivek: band(rp(5000), 3),
+      interval: band(paceAtPct(0.96, vdot), 3),
+      rep: band(paceAtPct(1.04, vdot), 3),
+      effort: null, walk: null,
+    };
+  }
+
+  /* ---------- Step builders ---------- */
+  // A step: { kind:'warmup'|'work'|'recover'|'cooldown', zone, dur:{type:'distance'|'time', value} }
+  // A repeat: { repeat:n, steps:[step,…] }
+  const S = (kind, zone, type, value, note) => ({ kind, zone, dur: { type, value: Math.round(value) }, ...(note ? { note } : {}) });
+  const R = (n, steps) => ({ repeat: n, steps });
+  const km = x => Math.round(x * 10) * 100;                            // round to 0.1 km, in metres
+
+  function flatten(steps) {
+    const out = [];
+    steps.forEach(s => s.repeat ? [...Array(s.repeat)].forEach((_, i) => s.steps.forEach(t => out.push({ ...t, rep: i + 1, of: s.repeat }))) : out.push(s));
+    return out;
+  }
+  function stepPace(step, zones) {
+    if (step.zone === 'walk') return 600;
+    if (step.zone === 'effort') return (zones.interval[0] + zones.interval[1]) / 2 + 25; // uphill is slower
+    const z = zones[step.zone];
+    return (z[0] + z[1]) / 2;
+  }
+  function estimate(steps, zones) {
+    let d = 0, t = 0;
+    flatten(steps).forEach(s => {
+      const p = stepPace(s, zones);
+      if (s.dur.type === 'distance') { d += s.dur.value; t += s.dur.value / 1000 * p; }
+      else { t += s.dur.value; d += s.dur.value / p * 1000; }
+    });
+    return { distance: d, duration: t };
+  }
+
+  /* ---------- Session library ---------- */
+  // Each returns { type, title, summary, steps }. `x` (0..1) = progression within phase.
+  const WU = (m = 2000) => S('warmup', 'easy', 'distance', m);
+  const CD = (m = 1500) => S('cooldown', 'easy', 'distance', m);
+  const lerp = (a, b, x) => a + (b - a) * x;
+  const LIB = {
+    easy: (dist) => ({ type: 'easy', title: 'Easy run', summary: `${(dist / 1000).toFixed(1)} km conversational`, steps: [S('work', 'easy', 'distance', dist)] }),
+    recovery: (dist) => ({ type: 'recovery', title: 'Recovery run', summary: `${(dist / 1000).toFixed(1)} km very easy`, steps: [S('work', 'recovery', 'distance', dist)] }),
+    strides: (dist) => ({ type: 'easy', title: 'Easy + strides', summary: `${(dist / 1000).toFixed(1)} km easy, 6 × 20 s strides`,
+      steps: [S('work', 'easy', 'distance', Math.max(2000, dist - 800)), R(6, [S('work', 'rep', 'time', 20, 'Fast, relaxed, not a sprint'), S('recover', 'walk', 'time', 60)])] }),
+    runwalk: (x) => {
+      const run = Math.round(lerp(1, 8, x)), walk = x > 0.8 ? 1 : 2, n = Math.max(3, Math.round(lerp(8, 4, x)));
+      return { type: 'runwalk', title: 'Run–walk', summary: `${n} × ${run} min run / ${walk} min walk`,
+        steps: [S('warmup', 'walk', 'time', 300), R(n, [S('work', 'easy', 'time', run * 60), S('recover', 'walk', 'time', walk * 60)]), S('cooldown', 'walk', 'time', 300)] };
+    },
+    long: (dist, finish) => {
+      if (finish && finish.dist) {
+        const fin = finish.dist, easy = Math.max(3000, dist - fin);
+        return { type: 'long', title: 'Long run, fast finish', summary: `${(dist / 1000).toFixed(0)} km with last ${(fin / 1000).toFixed(0)} km at ${ZONES[finish.zone].label.toLowerCase()}`,
+          steps: [S('work', 'long', 'distance', easy), S('work', finish.zone, 'distance', fin, 'Settle in, don’t race it')] };
+      }
+      return { type: 'long', title: 'Long run', summary: `${(dist / 1000).toFixed(0)} km steady and easy`, steps: [S('work', 'long', 'distance', dist)] };
+    },
+    fartlek: (x) => { const n = Math.round(lerp(6, 10, x));
+      return { type: 'quality', title: 'Fartlek', summary: `${n} × 2 min brisk / 1 min easy`,
+        steps: [WU(1500), R(n, [S('work', 'tenk', 'time', 120), S('recover', 'easy', 'time', 60)]), CD()] }; },
+    hills: (x) => { const n = Math.round(lerp(6, 10, x));
+      return { type: 'quality', title: 'Hill repeats', summary: `${n} × 75 s uphill, jog down`,
+        steps: [WU(2000), R(n, [S('work', 'effort', 'time', 75, 'Strong uphill, tall posture, drive arms'), S('recover', 'recovery', 'time', 120, 'Jog back down')]), CD()] }; },
+    progression: (dist) => ({ type: 'quality', title: 'Progression run', summary: 'Easy into marathon into threshold',
+      steps: [S('work', 'easy', 'distance', km(dist * 0.5 / 1000)), S('work', 'marathon', 'distance', km(dist * 0.3 / 1000)), S('work', 'threshold', 'distance', km(dist * 0.2 / 1000))] }),
+    tempo: (x) => { const min = Math.round(lerp(15, 30, x) / 5) * 5;
+      return { type: 'quality', title: 'Tempo run', summary: `${min} min at threshold`,
+        steps: [WU(2000), S('work', 'threshold', 'time', min * 60, 'Comfortably hard, could speak a few words'), CD()] }; },
+    cruise: (x) => { const n = Math.round(lerp(3, 6, x));
+      return { type: 'quality', title: 'Cruise intervals', summary: `${n} × 1.6 km at threshold`,
+        steps: [WU(2000), R(n, [S('work', 'threshold', 'distance', 1600), S('recover', 'recovery', 'time', 60)]), CD()] }; },
+    intervals: (x, weekly) => {
+      const rep = [800, 1000, 1200][Math.min(2, Math.floor(x * 3))];
+      const cap = Math.min(8000, weekly * 0.08);                         // ≤8% of weekly volume at I
+      const n = Math.max(3, Math.min(8, Math.floor(cap / rep)));
+      return { type: 'quality', title: 'Intervals', summary: `${n} × ${rep} m at interval pace`,
+        steps: [WU(2000), R(n, [S('work', 'interval', 'distance', rep), S('recover', 'recovery', 'time', Math.round(rep / 1000 * 150))]), CD()] };
+    },
+    reps: (x) => { const n = Math.round(lerp(8, 12, x));
+      return { type: 'quality', title: 'Speed reps', summary: `${n} × 200 m fast`,
+        steps: [WU(2000), R(n, [S('work', 'rep', 'distance', 200), S('recover', 'recovery', 'distance', 200)]), CD()] }; },
+    racepace: (goal, x) => {
+      const P = {
+        '5k':      () => { const n = Math.round(lerp(4, 6, x)); return [`${n} × 1 km at 5K pace`, R(n, [S('work', 'fivek', 'distance', 1000), S('recover', 'recovery', 'time', 120)])]; },
+        '10k':     () => { const n = Math.round(lerp(3, 5, x)); return [`${n} × 2 km at 10K pace`, R(n, [S('work', 'tenk', 'distance', 2000), S('recover', 'recovery', 'time', 120)])]; },
+        half:      () => { const d = Math.round(lerp(3, 5, x)); return [`2 × ${d} km at half pace`, R(2, [S('work', 'half', 'distance', d * 1000), S('recover', 'recovery', 'time', 180)])]; },
+        marathon:  () => { const d = Math.round(lerp(8, 16, x)); return [`${d} km at marathon pace`, S('work', 'marathon', 'distance', d * 1000, 'Practise race-day fuelling')]; },
+      }[goal]();
+      return { type: 'quality', title: 'Race-pace session', summary: P[0], steps: [WU(2000), P[1], CD()] };
+    },
+    sharpener: (goal) => {
+      const z = { '5k': 'fivek', '10k': 'tenk', half: 'half', marathon: 'marathon' }[goal];
+      return { type: 'quality', title: 'Race sharpener', summary: `5 × 400 m at ${ZONES[z].label.toLowerCase()}`,
+        steps: [WU(2000), R(5, [S('work', z, 'distance', 400), S('recover', 'recovery', 'time', 90)]), CD()] };
+    },
+    shakeout: () => ({ type: 'easy', title: 'Shakeout', summary: '3 km easy + 4 strides',
+      steps: [S('work', 'easy', 'distance', 3000), R(4, [S('work', 'rep', 'time', 15), S('recover', 'walk', 'time', 45)])] }),
+    race: (goal) => ({ type: 'race', title: `Race day: ${DIST_LABEL[goal]}`, summary: 'Go get it',
+      steps: [S('work', { '5k': 'fivek', '10k': 'tenk', half: 'half', marathon: 'marathon' }[goal], 'distance', DIST[goal])] }),
+  };
+
+  /* ---------- Plan shape tables ---------- */
+  const SHAPE = {
+    //           weeks: min,default,max  taper   peak km by level            long cap  start floor
+    '5k':       { weeks: [6, 8, 12],    taper: [0.6],              peak: [22, 35, 50],  longCap: [8, 12, 15],  floor: 10 },
+    '10k':      { weeks: [8, 10, 14],   taper: [0.6],              peak: [28, 42, 60],  longCap: [10, 15, 19], floor: 14 },
+    half:       { weeks: [10, 12, 16],  taper: [0.75, 0.5],        peak: [35, 50, 70],  longCap: [16, 20, 24], floor: 18 },
+    marathon:   { weeks: [12, 16, 20],  taper: [0.8, 0.6, 0.4],    peak: [45, 62, 85],  longCap: [29, 32, 34], floor: 25 },
+  };
+  const LEVELS = ['beginner', 'intermediate', 'advanced'];
+
+  /* ---------- Date helpers (local dates as yyyy-mm-dd) ---------- */
+  const iso = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+  const mondayOf = s => { const d = parse(s); const wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd); return iso(d); };
+  const weekday = s => (parse(s).getDay() + 6) % 7;                    // 0 = Mon
+  const daysBetween = (a, b) => Math.round((parse(b) - parse(a)) / DAY);
+
+  /* ---------- Fitness ---------- */
+  function baseVdot(p) {
+    if (p.fitness.kind === 'race') return vdotFromRace(p.fitness.meters, p.fitness.seconds);
+    if (p.fitness.kind === 'new') return 28;
+    return vdotFromRace(5000, p.fitness.fiveKSeconds);                 // estimate
+  }
+  function gainCap(weeks, level) { return Math.min([2.5, 3.5, 4][level], weeks / 4.5); }
+
+  /* ---------- Plan generation ---------- */
+  // profile: { goal, level(0-2), fitness, targetSeconds|null, raceDate, startDate, days:[0-6], longDay, weeklyKm, createdOn }
+  // adjust:  [{ from:'yyyy-mm-dd', vdot:+0.5, volume:0.9 }]  — applied to sessions on/after `from`
+  function generate(profile, adjust = []) {
+    const shape = SHAPE[profile.goal];
+    const lvl = profile.level;
+    const start = mondayOf(profile.startDate);
+    const raceDate = profile.raceDate;
+    const N = Math.max(1, Math.ceil((daysBetween(start, raceDate) + 1) / 7));
+    const T = Math.min(shape.taper.length, Math.max(0, N - 3));
+    const B = N - T;
+    const nBase = Math.max(1, Math.round(B * 0.3)), nBuild = Math.max(1, Math.round(B * 0.4));
+    const phaseOf = w => w >= B ? 'taper' : w < nBase ? 'base' : w < nBase + nBuild ? 'build' : 'peak';
+
+    const v0 = baseVdot(profile);
+    const cap = gainCap(N, lvl);
+    const goalV = profile.targetSeconds ? vdotFromRace(DIST[profile.goal], profile.targetSeconds) : null;
+    const gain = goalV ? Math.max(0, Math.min(goalV - v0, cap)) : cap * 0.7;
+    const vEnd = v0 + gain;
+    const realistic = !goalV || goalV <= v0 + cap + 0.3;
+    const isNew = profile.fitness.kind === 'new';
+
+    // Weekly volume curve
+    const startKm = Math.max(isNew ? 8 : shape.floor * (lvl === 0 ? 0.8 : 1), profile.weeklyKm || 0);
+    const longGoal = profile.goal === 'half' || profile.goal === 'marathon';
+    const peakKm = Math.max(startKm, Math.min(shape.peak[lvl], Math.max(startKm * (longGoal ? 1.75 : 1.6), shape.peak[0])));
+    const rwWeeks = isNew ? Math.max(2, Math.ceil(B * 0.5)) : 0;      // new runners: run–walk until continuous
+    const vols = [];
+    let v = startKm;
+    for (let w = 0; w < B; w++) {
+      if (w > 0) v = Math.min(peakKm, v * 1.09);
+      vols.push(w % 4 === 3 && w < B - 1 ? v * 0.8 : v);
+    }
+    for (let t = 0; t < T; t++) vols.push(peakKm * shape.taper[t]);
+
+    const adjAt = date => adjust.filter(a => a.from <= date).reduce((acc, a) => ({ vdot: acc.vdot + (a.vdot || 0), volume: acc.volume * (a.volume || 1) }), { vdot: 0, volume: 1 });
+
+    // Day assignment (circular gaps to keep hard days apart)
+    const days = [...new Set(profile.days)].sort((a, b) => a - b);
+    const longDay = days.includes(profile.longDay) ? profile.longDay : days[days.length - 1];
+    const gap = (a, b) => { const d = Math.abs(a - b); return Math.min(d, 7 - d); };
+    const others = days.filter(d => d !== longDay);
+    // Score a choice of hard days: maximise the smallest gap, then the total gap, and avoid the day right after the long run.
+    const score = set => { const all = [longDay, ...set]; let mn = 9, sum = 0;
+      for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) { const g = gap(all[i], all[j]); mn = Math.min(mn, g); sum += g; }
+      return mn * 100 + sum * 10 - set.filter(d => d === (longDay + 1) % 7).length * 5 - set.reduce((a, d) => a + d, 0) * 0.01; };
+    const nQ = days.length >= 5 ? 2 : 1;
+    let q1 = null, q2 = null;
+    if (nQ === 1 && others.length) q1 = others.slice().sort((a, b) => score([b]) - score([a]))[0];
+    if (nQ === 2) { let best = -1e9;
+      for (const a of others) for (const b of others) if (a < b) { const sc = score([a, b]); if (sc > best) { best = sc; q1 = a; q2 = b; } } }
+
+    const weeks = [];
+    let counters = {};
+    const rot = (key, list) => { counters[key] = (counters[key] || 0) + 1; return list[(counters[key] - 1) % list.length]; };
+
+    for (let w = 0; w < N; w++) {
+      const phase = phaseOf(w);
+      const wStart = addDays(start, w * 7);
+      const sameP = [...Array(N).keys()].filter(i => phaseOf(i) === phase);
+      const x = sameP.length > 1 ? sameP.indexOf(w) / (sameP.length - 1) : 1;
+      const isRaceWeek = w === N - 1;
+      const raceWd = weekday(raceDate);
+      const sessions = [];
+      const vol = vols[w] * 1000;
+      const longShare = lvl === 0 ? 0.32 : 0.3;
+      const longCap = shape.longCap[lvl] * 1000;
+      const beginnerRW = w < rwWeeks;
+      const rwX = Math.min(1, (w + 1) / rwWeeks);
+
+      const qType = (slot) => {
+        if (beginnerRW) return 'runwalk';
+        if (phase === 'base') return slot === 1 ? rot('b1', isNew ? ['fartlek', 'strides'] : ['fartlek', 'hills', 'progression']) : 'strides';
+        if (phase === 'taper') return slot === 1 ? 'sharpener' : 'strides';
+        if (isNew) return rot('new' + slot, phase === 'build' ? ['fartlek', 'tempo'] : ['racepace', 'tempo']);
+        const g = profile.goal;
+        const table = {
+          build: { '5k': [['intervals'], ['tempo', 'cruise']], '10k': [['cruise', 'tempo'], ['intervals']], half: [['tempo', 'cruise'], ['intervals', 'fartlek']], marathon: [['tempo', 'cruise'], ['racepace']] },
+          peak:  { '5k': [['racepace', 'reps'], ['tempo']], '10k': [['racepace'], ['intervals', 'cruise']], half: [['racepace'], ['cruise', 'intervals']], marathon: [['cruise', 'tempo'], ['racepace']] },
+        }[phase][g];
+        if (nQ === 1) return rot('q' + phase, w % 2 === 0 ? table[0] : table[1]);  // alternate the two themes
+        return rot(`q${slot}${phase}`, table[slot - 1]);
+      };
+
+      const make = (type, opts = {}) => {
+        switch (type) {
+          case 'runwalk': return LIB.runwalk(rwX);
+          case 'fartlek': return LIB.fartlek(x);
+          case 'hills': return LIB.hills(x);
+          case 'progression': return LIB.progression(Math.max(5000, vol * 0.18));
+          case 'tempo': return LIB.tempo(x);
+          case 'cruise': return LIB.cruise(x);
+          case 'intervals': return LIB.intervals(x, vol);
+          case 'reps': return LIB.reps(x);
+          case 'racepace': return LIB.racepace(profile.goal, x);
+          case 'sharpener': return LIB.sharpener(profile.goal);
+          case 'strides': return LIB.strides(opts.dist || 5000);
+        }
+      };
+
+      if (isRaceWeek) {
+        // Race week: easy early, sharpener mid-week, shakeout the day before, race.
+        const before = days.filter(d => d < raceWd);
+        const sh = before.includes(raceWd - 1) ? raceWd - 1 : null;
+        before.forEach((d, i) => {
+          let s;
+          if (d === sh) s = LIB.shakeout();
+          else if (i === 0 && before.length > 2 && profile.goal !== '5k') s = LIB.sharpener(profile.goal);
+          else s = LIB.strides(Math.max(4000, Math.min(8000, vol * 0.2)));
+          sessions.push({ day: d, ...s });
+        });
+        sessions.push({ day: raceWd, ...LIB.race(profile.goal) });
+      } else {
+        // Long run
+        // Long run ramps from today's long run to the cap by two weeks before the taper, bounded by a share of the week.
+        const maxShare = { '5k': 0.35, '10k': 0.36, half: 0.42, marathon: 0.55 }[profile.goal];
+        const startLong = Math.max(lvl === 0 ? 4000 : 6000, Math.min(longCap, startKm * 1000 * 0.33));
+        let longDist;
+        if (phase === 'taper') longDist = longCap * shape.taper[w - B] * 0.85;
+        else {
+          longDist = lerp(startLong, longCap, Math.min(1, w / Math.max(1, B - 3)));
+          if (w % 4 === 3 && w < B - 1) longDist *= 0.75;
+        }
+        longDist = Math.max(lvl === 0 ? 3000 : 5000, Math.min(longDist, vol * maxShare));
+        let finish = null;
+        if (phase === 'peak' && (profile.goal === 'marathon' || profile.goal === 'half') && w % 2 === 0) finish = { zone: profile.goal === 'marathon' ? 'marathon' : 'half', dist: Math.round(lerp(4, profile.goal === 'marathon' ? 10 : 5, x)) * 1000 };
+        const longS = beginnerRW ? LIB.runwalk(Math.min(1, rwX + 0.1)) : LIB.long(km(longDist / 1000), finish);
+        if (beginnerRW) longS.title = 'Longer run–walk';
+        sessions.push({ day: longDay, ...longS });
+        if (q1 != null) sessions.push({ day: q1, ...make(qType(1)) });
+        if (q2 != null) sessions.push({ day: q2, ...make(qType(2), { dist: 5000 }) });
+        // Fill easy days with the remaining volume
+        const used = sessions.reduce((a, s) => a + estimate(s.steps, paceZones(v0)).distance, 0);
+        const easyDays = others.filter(d => d !== q1 && d !== q2);
+        const each = easyDays.length ? Math.max(lvl === 0 ? 3000 : 4000, Math.min(Math.max(6000, longDist * 0.7), (vol - used) / easyDays.length)) : 0;
+        easyDays.forEach((d, i) => {
+          const s = beginnerRW ? LIB.runwalk(rwX) : (i === easyDays.length - 1 && days.length >= 4 && phase !== 'base' && nQ === 1 ? LIB.strides(km(each / 1000)) : LIB.easy(km(each / 1000)));
+          sessions.push({ day: d, ...s });
+        });
+      }
+
+      // Dates, ids, paces
+      const fracW = N > 1 ? w / (N - 1) : 1;
+      const list = sessions.sort((a, b) => a.day - b.day).map((s, i) => {
+        const date = addDays(wStart, s.day);
+        const a = adjAt(date);
+        const vd = v0 + gain * fracW + a.vdot;
+        const zones = paceZones(vd);
+        // goal-pace zones lock to the goal (if realistic) for race-specific work
+        if (goalV && realistic) {
+          const gz = paceZones(goalV + a.vdot * 0.5);
+          zones[{ '5k': 'fivek', '10k': 'tenk', half: 'half', marathon: 'marathon' }[profile.goal]] = gz[{ '5k': 'fivek', '10k': 'tenk', half: 'half', marathon: 'marathon' }[profile.goal]];
+        }
+        let steps = s.steps;
+        if (a.volume !== 1 && s.type !== 'race') steps = scaleSteps(steps, a.volume);
+        const est = estimate(steps, zones);
+        const mainZone = flatten(steps).filter(t => t.kind === 'work').sort((p, q) => ZONES[q.zone].rank - ZONES[p.zone].rank)[0]?.zone || 'easy';
+        return { id: `w${w + 1}-${s.day}`, week: w + 1, date, day: s.day, type: s.type, title: s.title, summary: s.summary, steps, zones, vdot: vd, mainZone, ...est };
+      }).filter(s => s.date >= profile.startDate);
+
+      weeks.push({ n: w + 1, start: wStart, phase, targetKm: vols[w], sessions: list, plannedKm: list.reduce((a, s) => a + s.distance, 0) / 1000 });
+    }
+
+    return {
+      weeks, N, phases: { base: nBase, build: nBuild, peak: B - nBase - nBuild, taper: T },
+      vdotStart: v0, vdotEnd: vEnd, goalVdot: goalV, realistic,
+      predicted: raceTime(vEnd + adjAt(raceDate).vdot, DIST[profile.goal]),
+      suggestedTarget: goalV && !realistic ? raceTime(v0 + cap, DIST[profile.goal]) : null,
+      peakKm, startKm,
+    };
+  }
+  function scaleSteps(steps, f) {
+    return steps.map(s => s.repeat ? s : (s.kind === 'work' && s.dur.type === 'distance' && s.zone !== 'rep') ? { ...s, dur: { ...s.dur, value: km(s.dur.value * f / 1000) } } : s);
+  }
+
+  /* ---------- Adaptation ---------- */
+  // Looks at recent completed sessions and proposes a change. Returns null or {vdot, volume, reason}.
+  function adapt(recent) {
+    const q = recent.filter(r => r.type === 'quality').slice(-3);
+    const hard = q.filter(r => r.feel === 'hard' || r.paceMiss > 0.03).length;
+    const easy = q.filter(r => r.feel === 'easy' && r.paceMiss <= 0).length;
+    const e = recent.filter(r => r.type === 'easy' || r.type === 'long').slice(-2);
+    if (q.length >= 2 && hard >= 2) return { vdot: -0.6, reason: 'Your last hard sessions felt tougher than planned, so upcoming paces ease off a little.' };
+    if (q.length >= 2 && easy >= 2) return { vdot: +0.5, reason: 'You’ve been hitting your targets comfortably, so upcoming paces step up slightly.' };
+    if (e.length === 2 && e.every(r => r.rpe >= 7)) return { volume: 0.9, reason: 'Easy runs have felt hard twice in a row. Next week’s distances drop 10% to let you absorb the training.' };
+    return null;
+  }
+
+  /* ---------- Formatting ---------- */
+  const fmtPace = (s, unit = 'km') => { if (s == null || !isFinite(s)) return '–:––'; const x = unit === 'mi' ? s * 1.609344 : s; const m = Math.floor(x / 60), r = Math.round(x % 60); return r === 60 ? `${m + 1}:00` : `${m}:${String(r).padStart(2, '0')}`; };
+  const fmtTime = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}` : `${m}:${String(r).padStart(2, '0')}`; };
+  const fmtDist = (m, unit = 'km', dp = 1) => (unit === 'mi' ? m / 1609.344 : m / 1000).toFixed(dp);
+
+  return { DIST, DIST_LABEL, ZONES, SHAPE, LEVELS, vdotFromRace, raceTime, paceZones, generate, flatten, estimate, stepPace, adapt, iso, parse, addDays, mondayOf, weekday, daysBetween, fmtPace, fmtTime, fmtDist };
+})();
+
+</script>
+<script>(() => {
+const E = Engine;
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const WD = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const ICON = {
+  logo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3.5-3.5M10 2h4M12 2v3"/></svg>',
+  today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 4a2 2 0 1 0 0 .01M8 21l3-6 3 3v3M6 12l3-4 4 1 3 4 3 1"/></svg>',
+  plan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  paces: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>',
+  you: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  check: '<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  cross: '<svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  play: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
+};
+
+/* =============== State & storage =============== */
+const KEY = 'pacekeeper.v1';
+const blank = () => ({ v: 1, sample: false, profile: null, adjust: [], moves: {}, log: {}, skipped: {}, dismissed: {}, settings: { unit: 'km', voice: true, watch: 'both', dayOffset: 0 }, updatedAt: 0 });
+let state = blank();
+let plan = null, sessions = [], byId = {};
+let view = 'today', selDay = null;
+
+const Store = {
+  ref: null, timer: null, busy: false, again: false,
+  loadLocal() { try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } },
+  save() {
+    state.updatedAt = Date.now();
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { }
+    clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), 700);
+  },
+  async flush() {
+    if (!this.ref) return;
+    if (this.busy) { this.again = true; return; }
+    this.busy = true;
+    try { await this.ref.set({ json: JSON.stringify(state), updatedAt: state.updatedAt }); } catch (e) { console.warn('sync failed', e); }
+    this.busy = false;
+    if (this.again) { this.again = false; this.flush(); }
+  },
+  async connect() {
+    try {
+      if (!window.claude || typeof window.claude.use !== 'function') return;
+      const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+      if (!db || !user) return;
+      const id = await user.id(); if (!id) return;
+      this.ref = db.doc('data/users/' + id + '/state');
+      const snap = await this.ref.get();
+      if (snap.exists) {
+        const remote = JSON.parse(snap.data().json || 'null');
+        if (remote && (remote.updatedAt || 0) > (state.updatedAt || 0)) { state = { ...blank(), ...remote, settings: { ...blank().settings, ...remote.settings } }; rebuild(); render(); }
+      } else if (state.profile && !state.sample) this.flush();
+    } catch (e) { console.warn('db unavailable', e); }
+  },
+};
+
+/* =============== Dates & units =============== */
+const today = () => { const d = new Date(); d.setDate(d.getDate() + (state.settings.dayOffset || 0)); return E.iso(d); };
+const U = () => state.settings.unit;
+const dist = (m, dp = 1) => `${E.fmtDist(m, U(), dp)} ${U()}`;
+const pace = s => `${E.fmtPace(s, U())}/${U()}`;
+const range = r => `${E.fmtPace(r[0], U())}–${E.fmtPace(r[1], U())}`;
+const fmtDur = s => s < 60 ? `${s} s` : s % 60 === 0 ? `${s / 60} min` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min`;
+const dayLabel = iso => { const d = E.parse(iso); return `${WD[(d.getDay() + 6) % 7]} ${d.getDate()} ${MON[d.getMonth()]}`; };
+const rel = iso => { const n = E.daysBetween(today(), iso); return n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : n === -1 ? 'Yesterday' : dayLabel(iso); };
+
+/* =============== Plan derivation =============== */
+function rebuild() {
+  if (!state.profile) { plan = null; sessions = []; byId = {}; return; }
+  plan = E.generate(state.profile, state.adjust);
+  sessions = []; byId = {};
+  plan.weeks.forEach(w => w.sessions.forEach(s => {
+    s.planDate = s.date;
+    if (state.moves[s.id]) s.date = state.moves[s.id];
+    s.log = state.log[s.id] || null; s.skipped = !!state.skipped[s.id];
+    sessions.push(s); byId[s.id] = s;
+  }));
+  sessions.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  plan.weeks.forEach(w => { w.doneKm = w.sessions.reduce((a, s) => a + (s.log ? s.log.distance : 0), 0) / 1000; });
+}
+const status = s => s.log ? 'done' : s.skipped ? 'skipped' : s.date < today() ? 'missed' : s.date === today() ? 'today' : 'upcoming';
+function weekOf(iso) {
+  const ws = plan.weeks;
+  return ws.find(w => iso >= w.start && iso <= E.addDays(w.start, 6)) || (iso < ws[0].start ? ws[0] : ws[ws.length - 1]);
+}
+const nextSession = () => sessions.find(s => s.date >= today() && !s.log && !s.skipped);
+const currentVdot = () => (nextSession() || sessions[sessions.length - 1]).vdot;
+const raceSession = () => sessions.find(s => s.type === 'race');
+
+/* =============== Workout helpers =============== */
+const RANK_H = { walk: .16, recovery: .3, easy: .45, long: .45, marathon: .6, half: .7, threshold: .74, tenk: .84, fivek: .88, interval: .9, effort: .86, rep: 1 };
+const zColor = z => `var(--z-${z})`;
+function stepName(st) {
+  if (st.kind === 'warmup') return st.zone === 'walk' ? 'Warm-up walk' : 'Warm up';
+  if (st.kind === 'cooldown') return st.zone === 'walk' ? 'Cool-down walk' : 'Cool down';
+  if (st.zone === 'walk') return 'Walk';
+  if (st.kind === 'recover') return st.zone === 'recovery' ? 'Recovery jog' : 'Recover';
+  return E.ZONES[st.zone].label;
+}
+function durText(d) {
+  if (d.type === 'time') return fmtDur(d.value);
+  if (d.value < (U() === 'mi' ? 1609 : 1000)) return `${d.value} m`;
+  return dist(d.value, d.value % 1000 === 0 && U() === 'km' ? 0 : 1);
+}
+function targetText(st, zones) {
+  if (st.zone === 'walk') return 'Brisk walk';
+  if (st.zone === 'effort') return 'By effort';
+  return `${range(zones[st.zone])} /${U()}`;
+}
+function profileSVG(s, cls = '') {
+  const flat = E.flatten(s.steps);
+  const parts = flat.map(st => { const p = E.stepPace(st, s.zones); return { st, t: st.dur.type === 'time' ? st.dur.value : st.dur.value / 1000 * p }; });
+  const total = parts.reduce((a, p) => a + p.t, 0) || 1;
+  const H = 60, W = 1000, gap = flat.length > 40 ? 1 : 3;
+  let x = 0;
+  const rects = parts.map(p => {
+    const w = Math.max(2, p.t / total * W - gap), h = Math.max(6, RANK_H[p.st.zone] * H);
+    const r = `<rect x="${x.toFixed(1)}" y="${(H - h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${zColor(p.st.zone)}"/>`;
+    x += p.t / total * W; return r;
+  }).join('');
+  return `<svg class="prof ${cls}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Intensity profile">${rects}</svg>`;
+}
+function stepsHTML(s) {
+  const one = st => `<div class="stp"><span class="zbar" style="background:${zColor(st.zone)}"></span>
+    <div class="sb"><div class="sn">${esc(stepName(st))}</div><div class="sd">${esc(targetText(st, s.zones))}${st.note ? ' · ' + esc(st.note) : ''}</div></div>
+    <div class="sv">${esc(durText(st.dur))}</div></div>`;
+  return s.steps.map(st => st.repeat ? `<div class="rep"><div class="rh"><span>Repeat ${st.repeat}×</span></div>${st.steps.map(one).join('')}</div>` : one(st)).join('');
+}
+const WHY = {
+  easy: 'Easy running builds your aerobic engine with little fatigue. Keep it conversational; going faster here only steals energy from the hard days.',
+  recovery: 'A short, very easy run to move blood through tired legs. Slower than you think.',
+  long: 'The long run builds endurance, fat-burning and the mental habit of time on feet. Even, relaxed pacing.',
+  quality: 'This is a key session for the week. Warm up properly, hit the target paces on the work segments and keep the recoveries truly easy.',
+  runwalk: 'Run–walk builds the habit and the tendons safely. The run segments grow week by week until you run continuously.',
+  race: 'Start a touch conservative for the first kilometre, settle into goal pace, and save something for the final third.',
+};
+const sessionKm = s => s.log ? s.log.distance : s.distance;
+
+/* =============== Sample data (first open) =============== */
+function loadSample() {
+  const t = today();
+  const start = E.addDays(t, -10);
+  const raceDate = E.addDays(E.mondayOf(start), 12 * 7 + 6);
+  state = { ...blank(), settings: state.settings, sample: true,
+    profile: { goal: 'half', level: 1, fitness: { kind: 'estimate', fiveKSeconds: 25 * 60 + 30 }, targetSeconds: 1 * 3600 + 55 * 60, raceDate, startDate: start, days: [1, 3, 4, 6], longDay: 6, weeklyKm: 25 } };
+  rebuild();
+  // Fake a few completed sessions so the plan shows history
+  sessions.filter(s => s.date < t).forEach((s, i, arr) => {
+    if (i === arr.length - 2) { state.skipped[s.id] = true; return; }
+    const p = (s.duration / s.distance) * 1000 * (1 + (i % 3 - 1) * 0.015);
+    state.log[s.id] = { date: s.date, distance: Math.round(s.distance * 1.01), duration: Math.round(s.distance * 1.01 / 1000 * p), avgPace: p, splits: [], steps: [], rpe: [4, 6, 3, 7][i % 4], feel: 'ok', paceMiss: 0, source: 'sample', type: s.type, at: Date.now() - (arr.length - i) * 86400000 };
+  });
+  rebuild();
+}
+
+/* =============== Render: shell =============== */
+function render() {
+  const app = $('#view');
+  if (!plan) { app.innerHTML = ''; return; }
+  const cw = weekOf(today());
+  $('#topmeta').innerHTML = `${esc(E.DIST_LABEL[state.profile.goal])} plan<br><b>Week ${cw.n} of ${plan.N}</b> · ${cw.phase[0].toUpperCase() + cw.phase.slice(1)}`;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-current', t.dataset.view === view ? 'page' : 'false'));
+  app.innerHTML = ({ today: viewToday, plan: viewPlan, paces: viewPaces, you: viewYou })[view]();
+  if (view === 'plan') { const cur = $('details.wk[data-cur]'); if (cur && !renderedPlanOnce) { renderedPlanOnce = true; cur.scrollIntoView({ block: 'center' }); } }
+}
+let renderedPlanOnce = false;
+
+function sampleBanner() {
+  return state.sample ? `<div class="banner"><span>This is a <b>sample half-marathon plan</b> with a few example runs logged.</span><button class="btn sm primary" data-a="onboard">Build mine</button></div>` : '';
+}
+
+/* =============== Today =============== */
+function viewToday() {
+  const t = today();
+  const cw = weekOf(t);
+  const days = [...Array(7)].map((_, i) => E.addDays(cw.start, i));
+  if (!selDay || selDay < cw.start || selDay > E.addDays(cw.start, 6)) selDay = t;
+  const strip = days.map(d => {
+    const ss = sessions.filter(s => s.date === d);
+    const mk = ss.length ? (ss[0].log ? ICON.check : ss[0].skipped || (d < t) ? (ss[0].log ? ICON.check : ICON.cross) : `<span class="dot" style="background:${zColor(ss[0].mainZone)}"></span>`) : '';
+    return `<button class="day ${d === t ? 'today' : ''}" data-a="day" data-d="${d}" aria-pressed="${d === selDay}"><span class="wd">${WD[E.weekday(d)].toUpperCase().slice(0, 2)}</span><span class="dn num">${E.parse(d).getDate()}</span><span class="mk">${mk}</span></button>`;
+  }).join('');
+  const sel = sessions.filter(s => s.date === selDay);
+  const hero = sel.length ? sel.map(heroCard).join('') : restCard(selDay);
+  const done = cw.sessions.reduce((a, s) => a + (s.log ? s.log.distance : 0), 0);
+  const planned = cw.sessions.reduce((a, s) => a + s.distance, 0);
+  const upcoming = sessions.filter(s => s.date > selDay && !s.log && !s.skipped).slice(0, 3);
+  const notice = latestNotice();
+  const race = raceSession();
+  return `${sampleBanner()}${notice}
+  <section class="card" style="padding:10px 8px"><div class="week">${strip}</div></section>
+  ${hero}
+  <section class="card stack">
+    <div class="row between"><span class="eyebrow">Week ${cw.n} · ${cw.phase}</span><span class="num" style="font-weight:700">${E.fmtDist(done, U())} / ${E.fmtDist(planned, U())} ${U()}</span></div>
+    <div class="bar"><i style="width:${Math.min(100, done / Math.max(1, planned) * 100).toFixed(0)}%"></i></div>
+    <div class="muted" style="font-size:13px">${cw.sessions.filter(s => s.log).length} of ${cw.sessions.length} sessions done${race ? ` · ${Math.max(0, E.daysBetween(t, race.date))} days to race day` : ''}</div>
+  </section>
+  ${upcoming.length ? `<div class="sec-h"><h2>Coming up</h2></div><section class="card list" style="padding-block:4px">${upcoming.map(itemRow).join('')}</section>` : ''}`;
+}
+function heroCard(s) {
+  const st = status(s);
+  const lg = s.log;
+  const statusLine = st === 'done' ? `<span class="chip" style="background:var(--good-soft);color:var(--good)">Completed</span>` : st === 'skipped' ? `<span class="chip">Skipped</span>` : st === 'missed' ? `<span class="chip" style="color:var(--bad)">Missed</span>` : '';
+  return `<section class="card hero">
+    <div class="row between"><span class="eyebrow">${esc(rel(s.date))} · ${esc(E.ZONES[s.mainZone].label)}</span>${statusLine}</div>
+    <div><h1 class="h-display t">${esc(s.title)}</h1><div class="muted">${esc(s.summary)}</div></div>
+    ${profileSVG(s)}
+    <div class="stats">
+      ${lg ? `<div class="stat"><div class="v">${E.fmtDist(lg.distance, U(), 2)}<small>${U()}</small></div><div class="l">Distance</div></div>
+             <div class="stat"><div class="v">${E.fmtTime(lg.duration)}</div><div class="l">Time</div></div>
+             <div class="stat"><div class="v">${E.fmtPace(lg.avgPace, U())}<small>/${U()}</small></div><div class="l">Avg pace</div></div>`
+           : `<div class="stat"><div class="v">${E.fmtDist(s.distance, U())}<small>${U()}</small></div><div class="l">Distance</div></div>
+             <div class="stat"><div class="v">${Math.round(s.duration / 60)}<small>min</small></div><div class="l">Est. time</div></div>
+             ${s.type === 'runwalk' || s.mainZone === 'effort' ? '' : `<div class="stat"><div class="v">${E.fmtPace(s.zones[keyZone(s)][0], U())}<small>/${U()}</small></div><div class="l">Key pace</div></div>`}`}
+    </div>
+    <div class="btns">
+      ${!lg && !s.skipped ? `<button class="btn primary" data-a="run" data-id="${s.id}">${ICON.play} Start run</button>` : ''}
+      <button class="btn" data-a="open" data-id="${s.id}">${lg ? 'See results' : 'Workout details'}</button>
+    </div>
+  </section>`;
+}
+const keyZone = s => { const f = E.flatten(s.steps).filter(t => t.kind === 'work' && s.zones[t.zone]); return (f.sort((a, b) => E.ZONES[b.zone].rank - E.ZONES[a.zone].rank)[0] || { zone: 'easy' }).zone; };
+function restCard(d) {
+  const nx = sessions.find(s => s.date > d && !s.log);
+  return `<section class="card hero"><span class="eyebrow">${esc(rel(d))}</span><h1 class="h-display t">Rest day</h1>
+    <div class="muted">Recovery is where the training turns into fitness. An easy walk or some mobility work is plenty.</div>
+    ${nx ? `<div class="note">Next up: <b>${esc(nx.title)}</b>, ${esc(rel(nx.date).toLowerCase())}. ${esc(nx.summary)}.</div>` : ''}</section>`;
+}
+function itemRow(s) {
+  const st = status(s);
+  const d = E.parse(s.date);
+  const end = st === 'done' ? `<div>${E.fmtDist(s.log.distance, U())} ${U()}</div><div class="st done">Done</div>` : st === 'missed' ? `<div>${E.fmtDist(s.distance, U())} ${U()}</div><div class="st missed">Missed</div>` : st === 'skipped' ? `<div>${E.fmtDist(s.distance, U())} ${U()}</div><div class="st skipped">Skipped</div>` : `<div>${E.fmtDist(s.distance, U())} ${U()}</div>${st === 'today' ? '<div class="st today">Today</div>' : `<div class="st muted">${Math.round(s.duration / 60)} min</div>`}`;
+  return `<button class="item is-${st}" data-a="open" data-id="${s.id}">
+    <span class="when"><div class="wd">${WD[E.weekday(s.date)]}</div><div class="dn num">${d.getDate()}</div></span>
+    <span class="zbar" style="background:${zColor(s.mainZone)}"></span>
+    <span class="body"><div class="ttl">${esc(s.title)}${state.moves[s.id] ? ' <span class="chip">Moved</span>' : ''}</div><div class="sub">${esc(s.summary)}</div></span>
+    <span class="end">${end}</span></button>`;
+}
+function latestNotice() {
+  const a = [...state.adjust].reverse().find(a => a.reason && !state.dismissed[a.at] && (Date.now() - a.at) < 7 * 86400000);
+  if (!a) return '';
+  return `<div class="banner ${a.vdot < 0 || a.volume < 1 ? 'warn' : 'good'}"><span><b>Plan updated.</b> ${esc(a.reason)}</span><button class="btn sm ghost" data-a="dismiss" data-k="${a.at}">OK</button></div>`;
+}
+
+/* =============== Plan =============== */
+function viewPlan() {
+  const t = today();
+  const race = raceSession();
+  const cw = weekOf(t);
+  const p = state.profile;
+  const ph = plan.phases;
+  const phaseBar = ['base', 'build', 'peak', 'taper'].filter(k => ph[k] > 0).map(k => `<i style="flex:${ph[k]};background:var(--ph-${k})"></i>`).join('');
+  const weeks = plan.weeks.map(w => `<details class="wk" ${w === cw ? 'open data-cur' : ''}>
+      <summary><span class="wn num">${w.n}</span><span class="body" style="flex:1;min-width:0"><div style="font-weight:700">${dayLabel(w.start).slice(4)} – ${dayLabel(E.addDays(w.start, 6)).slice(4)}</div>
+        <div class="muted" style="font-size:13px"><span class="dot" style="display:inline-block;background:var(--ph-${w.phase});margin-right:6px;vertical-align:1px"></span>${w.phase[0].toUpperCase() + w.phase.slice(1)}${w.n % 4 === 0 && w.phase !== 'taper' ? ' · lighter week' : ''}${w === cw ? ' · this week' : ''}</div></span>
+        <span class="num" style="font-weight:700;text-align:right">${E.fmtDist(w.plannedKm * 1000, U(), 0)} ${U()}${w.doneKm ? `<div class="st done" style="font-size:12px">${E.fmtDist(w.doneKm * 1000, U(), 0)} done</div>` : ''}</span>${ICON.chev}</summary>
+      <div class="wbody list">${w.sessions.map(itemRow).join('') || '<div class="muted" style="padding:10px 0">Plan starts later this week.</div>'}</div></details>`).join('');
+  return `${sampleBanner()}
+  <section class="card stack">
+    <span class="eyebrow">${esc(E.DIST_LABEL[p.goal])} · ${dayLabel(p.raceDate)}</span>
+    <div class="row between" style="align-items:flex-end">
+      <div><div class="h-display" style="font-size:44px">${E.fmtTime(plan.predicted)}</div><div class="muted" style="font-size:13px">Projected finish${p.targetSeconds ? ` · goal ${E.fmtTime(p.targetSeconds)}` : ''}</div></div>
+      <div style="text-align:right"><div class="h-display num" style="font-size:44px">${race ? Math.max(0, E.daysBetween(t, race.date)) : '–'}</div><div class="muted" style="font-size:13px">days to go</div></div>
+    </div>
+    ${p.targetSeconds && !plan.realistic ? `<div class="check warn">Your goal is ambitious for this timeframe. The plan trains you toward <b>${E.fmtTime(plan.suggestedTarget)}</b> and you can revisit the goal as fitness improves.</div>` : ''}
+  </section>
+  <section class="card stack">
+    <div class="row between"><span class="eyebrow">Weekly distance</span><span class="muted" style="font-size:13px">Peak ${E.fmtDist(plan.peakKm * 1000, U(), 0)} ${U()}</span></div>
+    ${volumeChart(cw)}
+    <div class="phases">${phaseBar}</div>
+    <div class="legend">${['base', 'build', 'peak', 'taper'].filter(k => ph[k] > 0).map(k => `<span><i class="dot" style="background:var(--ph-${k})"></i>${k[0].toUpperCase() + k.slice(1)} ${ph[k]} wk</span>`).join('')}</div>
+  </section>
+  <div class="sec-h"><h2>All weeks</h2><span class="muted" style="font-size:13px">${plan.N} weeks</span></div>
+  <div class="stack">${weeks}</div>`;
+}
+function volumeChart(cw) {
+  const ws = plan.weeks, n = ws.length;
+  const W = 340, H = 130, padL = 26, padB = 18, padT = 8;
+  const max = Math.max(...ws.map(w => w.plannedKm)) * 1.1 || 1;
+  const step = Math.ceil(max / 3 / 10) * 10 || 10;
+  const bw = (W - padL) / n;
+  const y = v => padT + (H - padT - padB) * (1 - v / max);
+  const grid = [...Array(4)].map((_, i) => i * step).filter(v => v <= max).map(v => `<line class="grid" x1="${padL}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text x="${padL - 5}" y="${y(v) + 3}" text-anchor="end">${U() === 'mi' ? Math.round(v / 1.609) : v}</text>`).join('');
+  const bars = ws.map((w, i) => {
+    const x = padL + i * bw + bw * 0.15, bwi = bw * 0.7;
+    const ph = `var(--ph-${w.phase})`;
+    const doneH = Math.min(w.doneKm, w.plannedKm * 1.3);
+    return `<rect x="${x}" y="${y(w.plannedKm)}" width="${bwi}" height="${y(0) - y(w.plannedKm)}" rx="2" fill="${ph}" opacity="${w.n < cw.n ? .35 : w === cw ? 1 : .7}"/>`
+      + (doneH ? `<rect x="${x}" y="${y(doneH)}" width="${bwi}" height="${y(0) - y(doneH)}" rx="2" fill="var(--ink)" opacity=".75"/>` : '')
+      + ((i % (n > 14 ? 3 : 2) === 0 || i === n - 1) ? `<text x="${x + bwi / 2}" y="${H - 4}" text-anchor="middle">${w.n}</text>` : '');
+  }).join('');
+  const nx = padL + (cw.n - 0.5) * bw;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weekly distance by week">${grid}${bars}<line class="now" x1="${nx}" x2="${nx}" y1="${padT - 4}" y2="${y(0)}"/></svg>
+  <div class="legend"><span><i class="dot" style="background:var(--ink);opacity:.75"></i>Completed</span><span><i class="dot" style="border:1.5px dashed var(--ink);background:none"></i>This week</span></div>`;
+}
+
+/* =============== Paces =============== */
+const ZONE_DESC = {
+  recovery: 'Very easy. Shuffle-jog between reps.', easy: 'Conversational. Most of your running.', long: 'Relaxed and even over long distance.',
+  marathon: 'Steady, controlled, sustainable for hours.', half: 'Strong but sustainable for 1–2 hours.', threshold: 'Comfortably hard. A few words at a time.',
+  tenk: 'Hard, rhythmic, 10K race effort.', fivek: 'Hard. 5K race effort.', interval: 'Hard, controlled. Builds VO₂max.', rep: 'Fast and relaxed. Builds speed and form.',
+};
+function viewPaces() {
+  const v = currentVdot();
+  const z = E.paceZones(v);
+  const rows = ['easy', 'long', 'marathon', 'half', 'threshold', 'tenk', 'fivek', 'interval', 'rep', 'recovery'].map(k => `<div class="zrow"><span class="zbar" style="background:${zColor(k)}"></span>
+    <div style="min-width:0"><div class="zn">${E.ZONES[k].label} <span class="chip">${E.ZONES[k].short}</span></div><div class="zd">${ZONE_DESC[k]}</div></div>
+    <div class="zp">${range(z[k])}<br><small>per ${U()}</small></div></div>`).join('');
+  const preds = [['5k', '5K'], ['10k', '10K'], ['half', 'Half'], ['marathon', 'Marathon']].map(([k, l]) => `<div class="pred"><div class="l">${l}</div><div class="v">${E.fmtTime(E.raceTime(v, E.DIST[k]))}</div></div>`).join('');
+  const hist = state.adjust.filter(a => a.reason).slice().reverse().map(a => `<div class="toggle" style="align-items:flex-start"><div><div style="font-weight:700">${a.vdot ? (a.vdot > 0 ? '+' : '') + a.vdot.toFixed(1) + ' fitness' : 'Volume ' + Math.round((a.volume - 1) * 100) + '%'}</div><div class="muted" style="font-size:13px">${esc(a.reason)}</div></div><span class="muted num" style="font-size:13px;white-space:nowrap">${dayLabel(a.from).slice(4)}</span></div>`).join('');
+  return `${sampleBanner()}
+  <section class="card stack">
+    <div class="row between" style="align-items:flex-end">
+      <div><span class="eyebrow">Fitness score</span><div class="score">${v.toFixed(1)}</div></div>
+      <div class="muted" style="font-size:13px;text-align:right;max-width:55%">A VDOT-style number from your race results. Your plan nudges it up week by week, and your runs adjust it.</div>
+    </div>
+    <div class="eyebrow" style="margin-top:4px">Equivalent race times today</div>
+    <div class="preds">${preds}</div>
+  </section>
+  <div class="sec-h"><h2>Training paces</h2><span class="muted" style="font-size:13px">per ${U()}</span></div>
+  <section class="card" style="padding-block:6px">${rows}</section>
+  <div class="sec-h"><h2>Raced recently?</h2></div>
+  <section class="card stack">
+    <div class="muted" style="font-size:14px">Enter a recent race or time trial and every upcoming pace recalculates from it.</div>
+    <div class="field"><label for="rr-d">Distance</label><select id="rr-d" class="input"><option value="5000">5K</option><option value="10000">10K</option><option value="21097.5">Half marathon</option><option value="42195">Marathon</option></select></div>
+    <div class="field"><span class="lbl">Time</span>${timeInputs('rr', 0, 25, 0)}</div>
+    <button class="btn primary" data-a="raceupdate">Update my paces</button>
+  </section>
+  ${hist ? `<div class="sec-h"><h2>Adjustments</h2></div><section class="card" style="padding-block:4px">${hist}</section>` : ''}`;
+}
+function timeInputs(p, h, m, s) {
+  return `<div class="time3"><div class="u"><input class="input num" id="${p}-h" inputmode="numeric" maxlength="2" value="${h}" aria-label="Hours"><span>h</span></div>
+  <div class="u"><input class="input num" id="${p}-m" inputmode="numeric" maxlength="2" value="${m}" aria-label="Minutes"><span>min</span></div>
+  <div class="u"><input class="input num" id="${p}-s" inputmode="numeric" maxlength="2" value="${s}" aria-label="Seconds"><span>s</span></div></div>`;
+}
+const readTime = (p, root = document) => ['h', 'm', 's'].reduce((a, k, i) => a + (parseInt($(`#${p}-${k}`, root)?.value, 10) || 0) * [3600, 60, 1][i], 0);
+const hms = s => [Math.floor(s / 3600), Math.floor(s % 3600 / 60), Math.round(s % 60)];
+
+/* =============== You =============== */
+function viewYou() {
+  const p = state.profile, st = state.settings;
+  const lv = ['Beginner', 'Intermediate', 'Advanced'][p.level];
+  const logs = Object.values(state.log);
+  const totalKm = logs.reduce((a, l) => a + l.distance, 0);
+  return `${sampleBanner()}
+  <section class="card stack">
+    <span class="eyebrow">Your plan</span>
+    <div class="h-display" style="font-size:30px;text-transform:uppercase">${esc(E.DIST_LABEL[p.goal])} · ${dayLabel(p.raceDate)}</div>
+    <div class="muted" style="font-size:14px">${lv} · ${p.days.length} runs a week (${p.days.map(d => WD[d]).join(', ')}) · long run ${WD[p.longDay]}${p.targetSeconds ? ` · goal ${E.fmtTime(p.targetSeconds)}` : ' · goal: finish strong'}</div>
+    <div class="btns"><button class="btn" data-a="edit">Change plan</button><button class="btn ghost" data-a="onboard">Start a new plan</button></div>
+  </section>
+  <section class="card">
+    <div class="toggle"><span><b>Units</b><div class="muted" style="font-size:13px">Distances and paces</div></span><div class="seg" style="width:140px">${['km', 'mi'].map(u => `<button data-a="unit" data-u="${u}" aria-pressed="${st.unit === u}">${u}</button>`).join('')}</div></div>
+    <div class="toggle"><label for="voice"><b>Voice coaching</b><div class="muted" style="font-size:13px">Spoken step changes, splits and pace nudges</div></label><input type="checkbox" class="switch" id="voice" data-a="voice" ${st.voice ? 'checked' : ''}></div>
+    <div class="toggle"><span><b>Watch</b><div class="muted" style="font-size:13px">Sets the default export format</div></span>
+      <select class="input" id="watch" data-a="watch" style="width:auto;min-height:38px;padding:6px 10px">${[['both', 'Both'], ['garmin', 'Garmin Venu 3S'], ['apple', 'Apple Watch']].map(([k, l]) => `<option value="${k}" ${st.watch === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+  </section>
+  <section class="card stack">
+    <span class="eyebrow">Totals</span>
+    <div class="stats"><div class="stat"><div class="v">${E.fmtDist(totalKm, U(), 0)}<small>${U()}</small></div><div class="l">Logged</div></div><div class="stat"><div class="v">${logs.length}</div><div class="l">Runs</div></div><div class="stat"><div class="v">${Object.keys(state.skipped).length}</div><div class="l">Skipped</div></div></div>
+  </section>
+  <div class="sec-h"><h2>Prototype tools</h2></div>
+  <section class="card stack">
+    <div class="muted" style="font-size:14px">Step through the calendar to test how the plan reacts. Today is <b>${dayLabel(today())}</b>${st.dayOffset ? ` (${st.dayOffset > 0 ? '+' : ''}${st.dayOffset} days)` : ''}.</div>
+    <div class="btns"><button class="btn sm" data-a="shift" data-n="1">+1 day</button><button class="btn sm" data-a="shift" data-n="7">+1 week</button><button class="btn sm ghost" data-a="shift" data-n="0">Real date</button></div>
+    <div class="btns"><button class="btn sm" data-a="exportplan">Export plan as JSON</button><button class="btn sm ghost danger" data-a="reset">Erase all data</button></div>
+    <div id="reset-confirm" hidden class="confirm"><b>Erase your plan and every logged run?</b><div class="btns"><button class="btn sm" data-a="reset-no">Keep</button><button class="btn sm primary" data-a="reset-yes" style="background:var(--bad)">Erase</button></div></div>
+  </section>`;
+}
+
+/* =============== Sheets =============== */
+function openSheet(html) {
+  $('#sheet').innerHTML = `<div class="scrim" data-a="close"></div><div class="sheet"><div class="panel" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
+  $('#sheet').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet() { $('#sheet').hidden = true; $('#sheet').innerHTML = ''; document.body.style.overflow = ''; }
+const sheetHead = (eyebrow, title) => `<div class="sheet-h"><div><span class="eyebrow">${esc(eyebrow)}</span><h2>${esc(title)}</h2></div><button class="x-btn" data-a="close" aria-label="Close">${ICON.close}</button></div>`;
+
+function sheetSession(id) {
+  const s = byId[id]; if (!s) return;
+  const st = status(s), lg = s.log;
+  const res = lg ? resultsHTML(s, lg) : '';
+  openSheet(`${sheetHead(`${dayLabel(s.date)} · Week ${s.week}`, s.title)}
+    <div class="muted" style="margin-top:-8px">${esc(s.summary)}</div>
+    ${res}
+    <section class="card stack">${profileSVG(s, 'lg')}
+      <div class="stats"><div class="stat"><div class="v">${E.fmtDist(s.distance, U())}<small>${U()}</small></div><div class="l">Planned</div></div><div class="stat"><div class="v">${Math.round(s.duration / 60)}<small>min</small></div><div class="l">Est. time</div></div><div class="stat"><div class="v">${s.vdot.toFixed(1)}</div><div class="l">Fitness used</div></div></div></section>
+    <div class="steps">${stepsHTML(s)}</div>
+    <div class="note"><b>Why this session.</b> ${WHY[s.type] || WHY.quality}</div>
+    ${!lg ? `<div class="btns">${!s.skipped ? `<button class="btn primary" data-a="run" data-id="${s.id}">${ICON.play} Start run</button>` : ''}<button class="btn" data-a="manual" data-id="${s.id}">Log from watch</button></div>` : ''}
+    <div class="btns"><button class="btn sm" data-a="export" data-id="${s.id}">Send to watch</button>
+      ${!lg && s.type !== 'race' ? `<button class="btn sm" data-a="move" data-id="${s.id}">Move</button>` : ''}
+      ${!lg ? `<button class="btn sm ghost" data-a="skip" data-id="${s.id}">${s.skipped ? 'Unskip' : 'Skip'}</button>` : `<button class="btn sm ghost danger" data-a="unlog" data-id="${s.id}">Delete result</button>`}</div>`);
+}
+function resultsHTML(s, lg) {
+  const feel = { easy: 'Felt easy', ok: 'Felt about right', hard: 'Felt hard' }[lg.feel] || '';
+  const stepRows = (lg.steps || []).filter(r => r.kind === 'work' && r.target).map(r => {
+    const p = r.distance > 20 ? r.duration / r.distance * 1000 : null;
+    const cls = p == null ? '' : p < r.target[0] - 2 ? 'fast' : p > r.target[1] + 2 ? 'slow' : 'ok';
+    return `<tr><td>${esc(r.label)}${r.rep ? ` ${r.rep}/${r.of}` : ''}</td><td class="r">${range(r.target)}</td><td class="r ${cls}">${p ? E.fmtPace(p, U()) : '–'}</td></tr>`;
+  }).join('');
+  const splits = (lg.splits || []).map((t, i) => `<tr><td>${i + 1}</td><td class="r">${E.fmtPace(t, 'km')}</td></tr>`).join('');
+  return `<section class="card stack" style="background:var(--good-soft)">
+    <div class="row between"><span class="eyebrow" style="color:var(--good)">Completed · ${esc({ gps: 'GPS', sim: 'Simulated', watch: 'From watch', sample: 'Example' }[lg.source] || '')}</span><span class="chip">RPE ${lg.rpe} · ${feel}</span></div>
+    <div class="stats"><div class="stat"><div class="v">${E.fmtDist(lg.distance, U(), 2)}<small>${U()}</small></div><div class="l">Distance</div></div><div class="stat"><div class="v">${E.fmtTime(lg.duration)}</div><div class="l">Time</div></div><div class="stat"><div class="v">${E.fmtPace(lg.avgPace, U())}<small>/${U()}</small></div><div class="l">Avg pace</div></div></div>
+    ${stepRows ? `<div class="tbl-wrap"><table class="splits"><tr><th>Work step</th><th class="r">Target</th><th class="r">Actual</th></tr>${stepRows}</table></div>` : ''}
+    ${splits && U() === 'km' ? `<div class="tbl-wrap"><table class="splits"><tr><th>Km</th><th class="r">Split</th></tr>${splits}</table></div>` : ''}
+  </section>`;
+}
+function sheetMove(id) {
+  const s = byId[id];
+  const w = plan.weeks[s.week - 1];
+  const days = [...Array(7)].map((_, i) => E.addDays(w.start, i)).filter(d => d >= today());
+  const hard = x => x.type === 'quality' || x.type === 'long' || x.type === 'race';
+  openSheet(`${sheetHead('Move session', s.title)}
+    <div class="muted">Pick a day this week. Hard sessions are best kept a day apart.</div>
+    <div class="opts">${days.map(d => {
+      const there = sessions.filter(x => x.date === d && x.id !== id);
+      const clash = hard(s) && sessions.some(x => x.id !== id && hard(x) && Math.abs(E.daysBetween(x.date, d)) <= 1);
+      return `<button class="opt" data-a="moveto" data-id="${id}" data-d="${d}" aria-pressed="${d === s.date}"><span class="big" style="font-size:22px;width:60px">${WD[E.weekday(d)]} ${E.parse(d).getDate()}</span>
+        <span><div class="ot">${there.length ? esc(there.map(x => x.title).join(', ')) : 'Free'}</div><div class="od">${clash ? '<span style="color:var(--warn);font-weight:700">Next to another hard day</span>' : d === s.planDate ? 'Original day' : ''}</div></span></button>`;
+    }).join('')}</div>`);
+}
+function sheetManual(id) {
+  const s = byId[id];
+  const [h, m, sec] = hms(s.duration);
+  openSheet(`${sheetHead('Log from watch', s.title)}
+    <div class="muted">Recorded this on your Garmin or Apple Watch? Enter the totals.</div>
+    <div class="field"><label for="ml-d">Distance (${U()})</label><input id="ml-d" class="input num" inputmode="decimal" value="${E.fmtDist(s.distance, U(), 2)}"></div>
+    <div class="field"><span class="lbl">Moving time</span>${timeInputs('ml', h, m, sec)}</div>
+    ${feedbackFields()}
+    <button class="btn primary block" data-a="manualsave" data-id="${id}">Save run</button>`);
+}
+function feedbackFields(rpe = 5, feel = 'ok') {
+  return `<div class="field"><span class="lbl">Effort (RPE 1–10)</span><div class="rpe" id="rpe">${[...Array(10)].map((_, i) => `<button data-a="rpe" data-v="${i + 1}" aria-pressed="${i + 1 === rpe}">${i + 1}</button>`).join('')}</div>
+    <div class="muted" style="font-size:12.5px;display:flex;justify-content:space-between"><span>Very light</span><span>Max effort</span></div></div>
+    <div class="field"><span class="lbl">How did it feel against the plan?</span><div class="seg" id="feel">${[['easy', 'Too easy'], ['ok', 'About right'], ['hard', 'Too hard']].map(([k, l]) => `<button data-a="feel" data-v="${k}" aria-pressed="${k === feel}">${l}</button>`).join('')}</div></div>`;
+}
+const readFeedback = root => ({ rpe: +($('#rpe [aria-pressed="true"]', root)?.dataset.v || 5), feel: $('#feel [aria-pressed="true"]', root)?.dataset.v || 'ok' });
+
+/* =============== Export (watch handoff) =============== */
+const mps = sPerKm => +(1000 / sPerKm).toFixed(3);
+function garminJSON(s) {
+  let order = 0;
+  const step = (st, inRepeat) => {
+    const z = s.zones[st.zone];
+    return { type: 'WorkoutStep', stepOrder: ++order,
+      intensity: st.kind === 'warmup' ? 'WARMUP' : st.kind === 'cooldown' ? 'COOLDOWN' : st.zone === 'walk' ? 'REST' : st.kind === 'recover' ? 'RECOVERY' : inRepeat ? 'INTERVAL' : 'ACTIVE',
+      description: [stepName(st), st.note].filter(Boolean).join(' – '),
+      durationType: st.dur.type === 'distance' ? 'DISTANCE' : 'TIME', durationValue: st.dur.value, durationValueType: st.dur.type === 'distance' ? 'METER' : null,
+      targetType: z ? 'PACE' : 'OPEN', targetValueLow: z ? mps(z[1]) : null, targetValueHigh: z ? mps(z[0]) : null };
+  };
+  return { workoutName: s.title, description: s.summary, sport: 'RUNNING', workoutProvider: 'Pacekeeper', workoutSourceId: 'pacekeeper', scheduledDate: s.date,
+    steps: s.steps.map(st => st.repeat ? { type: 'WorkoutRepeatStep', stepOrder: ++order, repeatType: 'REPEAT_UNTIL_STEPS_CMPLT', repeatValue: st.repeat, steps: st.steps.map(x => step(x, true)) } : step(st, false)) };
+}
+function workoutKitSwift(s) {
+  const goal = d => d.type === 'distance' ? (d.value % 1000 === 0 ? `.distance(${d.value / 1000}, .kilometers)` : `.distance(${d.value}, .meters)`) : `.time(${d.value}, .seconds)`;
+  const alert = st => { const z = s.zones[st.zone]; return z ? `, alert: .speed(${mps(z[1])}...${mps(z[0])}, unit: .metersPerSecond)` : ''; };
+  const ws = st => `WorkoutStep(goal: ${goal(st.dur)}${alert(st)})`;
+  const is = (st, ind) => `${ind}IntervalStep(.${st.kind === 'work' && st.zone !== 'walk' ? 'work' : 'recovery'}, goal: ${goal(st.dur)}${alert(st)})`;
+  const steps = s.steps.slice();
+  const warm = steps[0] && !steps[0].repeat && steps[0].kind === 'warmup' ? steps.shift() : null;
+  const cool = steps.length && !steps[steps.length - 1].repeat && steps[steps.length - 1].kind === 'cooldown' ? steps.pop() : null;
+  const blocks = steps.map(st => st.repeat
+    ? `        IntervalBlock(steps: [\n${st.steps.map(x => is(x, '            ')).join(',\n')}\n        ], iterations: ${st.repeat})`
+    : `        IntervalBlock(steps: [\n${is(st, '            ')}\n        ], iterations: 1)`).join(',\n');
+  const d = E.parse(s.date);
+  return `import WorkoutKit
+import HealthKit
+
+// ${s.title} · ${s.summary}
+let workout = CustomWorkout(
+    activity: .running,
+    location: .outdoor,
+    displayName: ${JSON.stringify(s.title)},${warm ? `\n    warmup: ${ws(warm)},` : ''}
+    blocks: [
+${blocks}
+    ]${cool ? `,\n    cooldown: ${ws(cool)}` : ''}
+)
+
+// Schedule it so it appears in the Workout app on Apple Watch
+let plan = WorkoutPlan(.custom(workout))
+try await WorkoutScheduler.shared.schedule(
+    plan, at: DateComponents(year: ${d.getFullYear()}, month: ${d.getMonth() + 1}, day: ${d.getDate()}, hour: 7))`;
+}
+function appJSON(s) {
+  return { id: s.id, date: s.date, week: s.week, type: s.type, title: s.title, summary: s.summary, estDistanceM: Math.round(s.distance), estDurationS: Math.round(s.duration),
+    steps: s.steps.map(function m(st) { return st.repeat ? { repeat: st.repeat, steps: st.steps.map(m) } : { ...st, targetPaceSecPerKm: s.zones[st.zone] ? s.zones[st.zone].map(Math.round) : null }; }) };
+}
+let exportTab = null;
+function sheetExport(id) {
+  const s = byId[id];
+  const def = state.settings.watch === 'apple' ? 'apple' : 'garmin';
+  exportTab = exportTab || def;
+  const code = exportTab === 'apple' ? workoutKitSwift(s) : JSON.stringify(exportTab === 'garmin' ? garminJSON(s) : appJSON(s), null, 2);
+  const note = { apple: 'Swift for <b>WorkoutKit</b> (watchOS 10+/iOS 17+). In the native app this schedules the workout straight onto your Apple Watch with pace alerts on every step.',
+    garmin: 'A workout payload in the shape the <b>Garmin Training API</b> accepts. Pushing it to your Venu 3S needs a Garmin Connect Developer Program key; the watch then shows it under Training › Workouts.',
+    app: 'Pacekeeper’s own format. This is the model your Swift app will decode with <code>Codable</code>.' }[exportTab];
+  openSheet(`${sheetHead('Send to watch', s.title)}
+    <div class="seg">${[['garmin', 'Garmin'], ['apple', 'Apple Watch'], ['app', 'App JSON']].map(([k, l]) => `<button data-a="exptab" data-id="${id}" data-t="${k}" aria-pressed="${k === exportTab}">${l}</button>`).join('')}</div>
+    <div class="note">${note}</div>
+    <pre class="code" id="code">${esc(code)}</pre>
+    <div class="btns"><button class="btn primary" data-a="copy">Copy</button><button class="btn" data-a="savefile" data-id="${id}" ${downloads ? '' : 'hidden'}>Save file</button></div>`);
+}
+let downloads = null;
+async function saveFile(filename, data) {
+  if (!downloads) return toast('Saving files isn’t available here. Use Copy instead.');
+  try { await downloads.save({ filename, data }); toast('Saved'); } catch (e) { if (e && e.code !== 'declined') toast('Couldn’t save the file.'); }
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast('Copied'); }
+  catch (e) { const el = $('#code'); if (el) { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); } toast('Selected. Copy it from the menu.'); }
+}
+
+/* =============== Logging & adaptation =============== */
+function paceMissOf(steps) {
+  const work = (steps || []).filter(r => r.kind === 'work' && r.target && r.distance > 50);
+  if (!work.length) return 0;
+  const misses = work.map(r => { const p = r.duration / r.distance * 1000; return p > r.target[1] ? (p - r.target[1]) / r.target[1] : p < r.target[0] ? -(r.target[0] - p) / r.target[0] : 0; });
+  return misses.reduce((a, b) => a + b, 0) / misses.length;
+}
+function saveLog(id, rec) {
+  const s = byId[id];
+  state.log[id] = { ...rec, type: s.type, at: Date.now() };
+  delete state.skipped[id];
+  // adapt from runs logged since the last adjustment
+  const lastAt = Math.max(0, ...state.adjust.map(a => a.at || 0));
+  const recent = Object.values(state.log).filter(l => l.at > lastAt && l.source !== 'sample').sort((a, b) => a.at - b.at)
+    .map(l => ({ type: l.type === 'race' ? 'quality' : l.type === 'runwalk' || l.type === 'recovery' ? 'easy' : l.type, feel: l.feel, rpe: l.rpe, paceMiss: l.paceMiss || 0 }));
+  const a = E.adapt(recent);
+  if (a) {
+    const from = E.addDays(today(), 1), at = Date.now();
+    state.adjust.push({ from, vdot: a.vdot || 0, volume: a.volume || 1, reason: a.reason, at });
+    if (a.volume) state.adjust.push({ from: E.addDays(from, 7), volume: 1 / a.volume, at: at + 1 });
+  }
+  state.sample = false;
+  Store.save(); rebuild();
+  return a;
+}
+
+/* =============== Run mode =============== */
+const Run = {
+  s: null, iv: null, wake: null, ac: null,
+  open(id) {
+    const ses = byId[id];
+    const flat = E.flatten(ses.steps).map(st => ({ ...st, label: stepName(st), target: ses.zones[st.zone] || null, est: E.stepPace(st, ses.zones) }));
+    this.s = { ses, flat, phase: 'ready', mode: null, i: 0, t: 0, d: 0, stepT: 0, stepD: 0, results: [], splits: [], lastSplitT: 0, nextSplit: 1000,
+      paused: false, speed: 10, effort: 0, recent: [], lastPos: null, watchId: null, gpsMsg: '', lastTick: 0, off: { since: null, last: -1e9 }, confirm: false };
+    $('#run').hidden = false; document.body.style.overflow = 'hidden';
+    this.renderReady();
+    this.probeGPS();
+  },
+  probeGPS() {
+    const s = this.s;
+    if (!('geolocation' in navigator)) { s.gpsMsg = 'This browser has no GPS access.'; this.renderReady(); return; }
+    s.gpsMsg = 'Checking GPS…'; this.renderReady();
+    try {
+      navigator.geolocation.getCurrentPosition(
+        p => { s.gpsOK = true; s.gpsMsg = `GPS ready (±${Math.round(p.coords.accuracy)} m)`; if (s.phase === 'ready') this.renderReady(); },
+        e => { s.gpsOK = false; s.gpsMsg = e.code === 1 ? 'Location isn’t allowed in this preview. Use the simulator, or open the app from your own HTTPS host for real GPS.' : 'No GPS fix yet. You can still simulate.'; if (s.phase === 'ready') this.renderReady(); },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 });
+    } catch (e) { s.gpsOK = false; s.gpsMsg = 'Location isn’t available here.'; this.renderReady(); }
+  },
+  renderReady() {
+    const s = this.s; if (!s || s.phase !== 'ready') return;
+    const ses = s.ses;
+    $('#run').innerHTML = `<div class="in">
+      <div class="row between"><span class="eyebrow">Ready to run</span><button class="x-btn" data-r="close" aria-label="Close">${ICON.close}</button></div>
+      <h1 class="h-display" style="font-size:44px;text-transform:uppercase">${esc(ses.title)}</h1>
+      <div class="muted" style="margin-top:-8px">${esc(ses.summary)} · ~${Math.round(ses.duration / 60)} min</div>
+      ${profileSVG(ses, 'lg')}
+      <div class="steps">${stepsHTML(ses)}</div>
+      <div class="check ${s.gpsOK ? 'good' : s.gpsOK === false ? 'warn' : ''}">${esc(s.gpsMsg)}</div>
+      <div class="stack" style="margin-top:auto">
+        <button class="btn primary block" data-r="go" data-m="gps" ${s.gpsOK ? '' : 'disabled'} style="min-height:58px;font-size:17px">${ICON.play} Start with GPS</button>
+        <button class="btn block" data-r="go" data-m="sim">Simulate this run</button>
+      </div></div>`;
+  },
+  go(mode) {
+    const s = this.s; s.mode = mode; s.phase = 'count';
+    try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { }
+    if (state.settings.voice && 'speechSynthesis' in window) { try { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch (e) { } }
+    if (navigator.wakeLock) navigator.wakeLock.request('screen').then(w => this.wake = w).catch(() => { });
+    let n = 3;
+    const step = () => {
+      if (!this.s) return;
+      if (n === 0) { this.begin(); return; }
+      $('#run').innerHTML = `<div class="in"><div class="count num">${n}</div><div class="muted" style="text-align:center">${esc(s.flat[0].label)} first</div></div>`;
+      this.beep(n === 1 ? 660 : 520, .12); n--; setTimeout(step, 900);
+    };
+    step();
+  },
+  begin() {
+    const s = this.s; s.phase = 'run'; s.lastTick = performance.now();
+    if (s.mode === 'gps') {
+      s.watchId = navigator.geolocation.watchPosition(p => this.onPos(p), () => { }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+    }
+    this.renderFrame(); this.cueStep();
+    this.iv = setInterval(() => this.tick(), 250);
+  },
+  onPos(p) {
+    const s = this.s; if (!s || s.paused || s.phase !== 'run') return;
+    const c = p.coords; if (c.accuracy > 35) return;
+    if (s.lastPos) {
+      const d = hav(s.lastPos.coords, c), dt = (p.timestamp - s.lastPos.timestamp) / 1000;
+      if (dt <= 0 || d / dt > 8 || d < 1.5) { if (d / dt > 8) s.lastPos = p; return; }
+      this.addDist(d);
+    }
+    s.lastPos = p;
+  },
+  tick() {
+    const s = this.s; if (!s || s.phase !== 'run') return;
+    const now = performance.now(); let dt = (now - s.lastTick) / 1000; s.lastTick = now;
+    if (s.paused) return;
+    if (s.mode === 'sim') dt *= s.speed;
+    s.t += dt; s.stepT += dt;
+    if (s.mode === 'sim') {
+      const st = s.flat[s.i];
+      const p = st.est + s.effort + (Math.sin(s.t / 23) * 4);
+      this.addDist(dt * 1000 / p);
+    }
+    s.recent.push({ t: s.t, d: s.d }); while (s.recent.length > 2 && s.t - s.recent[0].t > 20) s.recent.shift();
+    // step completion
+    const st = s.flat[s.i];
+    const left = st.dur.type === 'time' ? st.dur.value - s.stepT : st.dur.value - s.stepD;
+    if (st.dur.type === 'time' && left <= 3.2 && left > 0) { const k = Math.ceil(left); if (s.beeped !== k + '-' + s.i) { s.beeped = k + '-' + s.i; this.beep(520, .08); } }
+    if (left <= 0) this.nextStep(st.dur.type === 'distance' ? -left : 0);
+    if (!this.s || this.s.phase !== 'run') return;
+    this.paceCoach();
+    this.updateLive();
+  },
+  addDist(dd) {
+    const s = this.s; s.d += dd; s.stepD += dd;
+    const unitM = U() === 'mi' ? 1609.344 : 1000;
+    while (s.d >= s.nextSplit) {
+      const frac = (s.d - s.nextSplit) / dd; const tAt = s.t - frac * 0; // approx
+      const split = tAt - s.lastSplitT; s.splits.push(split / (unitM / 1000)); s.lastSplitT = tAt;
+      const n = Math.round(s.nextSplit / unitM);
+      s.nextSplit += unitM;
+      this.say(`${n} ${U() === 'mi' ? (n === 1 ? 'mile' : 'miles') : (n === 1 ? 'kilometre' : 'kilometres')}. Last split ${spokenPace(split)}.`);
+    }
+  },
+  curPace() { const s = this.s; const a = s.recent[0], b = s.recent[s.recent.length - 1]; if (!a || b.d - a.d < 5) return null; return (b.t - a.t) / (b.d - a.d) * 1000; },
+  paceCoach() {
+    const s = this.s, st = s.flat[s.i];
+    if (!st.target || st.kind !== 'work' || s.stepT < 25) { s.off.since = null; return; }
+    const p = this.curPace(); if (!p) return;
+    const off = p < st.target[0] - 5 ? 'fast' : p > st.target[1] + 5 ? 'slow' : null;
+    if (!off) { s.off.since = null; return; }
+    if (s.off.kind !== off) { s.off.kind = off; s.off.since = s.t; }
+    if (s.t - s.off.since > 15 && s.t - s.off.last > 45) { s.off.last = s.t; this.say(off === 'fast' ? 'A little fast. Ease back to target.' : 'Pick it up slightly.'); }
+  },
+  nextStep(carry) {
+    const s = this.s, st = s.flat[s.i];
+    s.results.push({ label: st.label, kind: st.kind, zone: st.zone, target: st.target, rep: st.rep, of: st.of, distance: s.stepD - carry, duration: s.stepT });
+    s.i++; s.stepT = 0; s.stepD = carry; s.off = { since: null, last: s.off.last };
+    if (s.i >= s.flat.length) { this.beep(880, .25); this.say('Workout complete. Great work.'); this.finish(); return; }
+    this.beep(740, .15); this.renderFrame(); this.cueStep();
+  },
+  cueStep() {
+    const s = this.s, st = s.flat[s.i];
+    const d = st.dur.type === 'time' ? spokenDur(st.dur.value) : st.dur.value < 1000 ? `${st.dur.value} metres` : `${+(st.dur.value / 1000).toFixed(1)} kilometres`;
+    const tgt = st.target ? `, target ${spokenPace(st.target[0])} to ${spokenPace(st.target[1])}` : st.zone === 'effort' ? ', hard effort' : '';
+    this.say(`${st.label}${st.rep ? ` ${st.rep} of ${st.of}` : ''}. ${d}${tgt}.`);
+  },
+  renderFrame() {
+    const s = this.s, st = s.flat[s.i], nx = s.flat[s.i + 1];
+    const totalEst = s.flat.reduce((a, x) => a + (x.dur.type === 'time' ? x.dur.value : x.dur.value / 1000 * x.est), 0);
+    const tl = s.flat.map((x, k) => `<i class="${k < s.i ? 'past' : k === s.i ? 'now' : ''}" style="flex:${(x.dur.type === 'time' ? x.dur.value : x.dur.value / 1000 * x.est) / totalEst};background:${zColor(x.zone)}"></i>`).join('');
+    $('#run').innerHTML = `<div class="in">
+      <div class="row between"><span class="mode ${s.mode === 'sim' ? 'sim' : ''}">${s.mode === 'sim' ? 'Simulated run' : 'GPS'}</span><span class="eyebrow">Step ${s.i + 1} of ${s.flat.length}</span></div>
+      <div class="timeline">${tl}</div>
+      <section class="cur" style="background:${zColor(st.zone)}">
+        <div class="lab">${esc(st.label)}${st.rep ? ` · ${st.rep} of ${st.of}` : ''}</div>
+        <div class="big" id="r-left">–</div>
+        <div class="tgt">${st.target ? `${range(st.target)} /${U()}` : st.zone === 'effort' ? 'Hard effort · ' + esc(st.note || '') : st.zone === 'walk' ? 'Walk briskly' : ''}</div>
+        <div class="rem" id="r-bar" style="width:0"></div>
+      </section>
+      ${st.target ? `<div class="gauge" id="r-gauge"><span class="gl" style="left:8px">faster</span><span class="gl" style="right:8px">slower</span><div class="band" id="r-band"></div><div class="pin" id="r-pin" style="left:50%"></div></div>` : ''}
+      <div class="live">
+        <div class="card"><div class="l">Pace now</div><div class="v" id="r-pace">–:––</div></div>
+        <div class="card"><div class="l">Distance</div><div class="v" id="r-dist">0.00</div></div>
+        <div class="card"><div class="l">Time</div><div class="v" id="r-time">0:00</div></div>
+        <div class="card"><div class="l">Avg pace</div><div class="v" id="r-avg">–:––</div></div>
+      </div>
+      <div class="muted" style="font-size:14px">${nx ? `Next: <b>${esc(nx.label)}</b> · ${esc(durText(nx.dur))}${nx.target ? ' at ' + range(nx.target) : ''}` : 'Last step. Finish strong.'}</div>
+      ${s.mode === 'sim' ? `<section class="card stack"><div class="row between"><span class="eyebrow">Simulator</span><div class="seg" style="width:170px">${[1, 10, 30].map(k => `<button data-r="speed" data-v="${k}" aria-pressed="${s.speed === k}">${k}×</button>`).join('')}</div></div>
+        <label class="row between" for="r-eff" style="font-size:13px;font-weight:700"><span>Run faster</span><span id="r-effv">${s.effort ? (s.effort > 0 ? '+' : '') + s.effort + ' s/km' : 'On target'}</span><span>Run slower</span></label>
+        <input type="range" id="r-eff" min="-30" max="40" step="5" value="${s.effort}" data-r="effort"></section>` : ''}
+      <div id="r-confirm"></div>
+      <div class="ctrl">
+        <button class="btn" data-r="skip">Skip step</button>
+        <button class="btn primary" data-r="pause" id="r-pausebtn">${s.paused ? 'Resume' : 'Pause'}</button>
+        <button class="btn" data-r="end">End</button>
+      </div></div>`;
+    this.updateLive();
+  },
+  updateLive() {
+    const s = this.s; if (!s || s.phase !== 'run') return;
+    const st = s.flat[s.i];
+    const left = st.dur.type === 'time' ? Math.max(0, st.dur.value - s.stepT) : Math.max(0, st.dur.value - s.stepD);
+    const set = (id, v) => { const el = document.getElementById(id); if (el && el.textContent !== v) el.textContent = v; };
+    set('r-left', st.dur.type === 'time' ? E.fmtTime(left) : left >= 1000 ? (U() === 'mi' ? (left / 1609.344).toFixed(2) + ' mi' : (left / 1000).toFixed(2) + ' km') : Math.round(left) + ' m');
+    const frac = st.dur.type === 'time' ? s.stepT / st.dur.value : s.stepD / st.dur.value;
+    const bar = document.getElementById('r-bar'); if (bar) bar.style.width = Math.min(100, frac * 100).toFixed(1) + '%';
+    const p = this.curPace();
+    set('r-pace', p ? E.fmtPace(p, U()) : '–:––');
+    set('r-dist', E.fmtDist(s.d, U(), 2));
+    set('r-time', E.fmtTime(s.t));
+    set('r-avg', s.d > 30 ? E.fmtPace(s.t / s.d * 1000, U()) : '–:––');
+    if (st.target) {
+      const lo = st.target[0] - 30, hi = st.target[1] + 30, x = v => Math.max(2, Math.min(98, (v - lo) / (hi - lo) * 100));
+      const band = document.getElementById('r-band'); if (band) { band.style.left = x(st.target[0]) + '%'; band.style.width = (x(st.target[1]) - x(st.target[0])) + '%'; }
+      const pin = document.getElementById('r-pin'); if (pin && p) pin.style.left = x(p) + '%';
+    }
+  },
+  finish() {
+    const s = this.s;
+    if (s.phase === 'run' && s.stepT > 1 && s.i < s.flat.length) { const st = s.flat[s.i]; s.results.push({ label: st.label, kind: st.kind, zone: st.zone, target: st.target, rep: st.rep, of: st.of, distance: s.stepD, duration: s.stepT }); }
+    this.stop(); s.phase = 'done';
+    const avg = s.d > 0 ? s.t / s.d * 1000 : 0;
+    const fake = { distance: s.d, duration: s.t, avgPace: avg, steps: s.results, splits: U() === 'km' ? s.splits : [], rpe: 5, feel: 'ok', source: s.mode };
+    $('#run').innerHTML = `<div class="in">
+      <div class="row between"><span class="eyebrow">Run complete</span><button class="x-btn" data-r="discard" aria-label="Discard">${ICON.close}</button></div>
+      <h1 class="h-display" style="font-size:44px;text-transform:uppercase">${esc(s.ses.title)}</h1>
+      ${resultsHTML(s.ses, fake).replace('RPE 5 · Felt about right', 'How was it?')}
+      ${feedbackFields()}
+      <button class="btn primary block" data-r="save" style="min-height:56px">Save run</button>
+      <button class="btn ghost block" data-r="discard">Discard</button></div>`;
+    s.rec = fake;
+  },
+  stop() {
+    const s = this.s; clearInterval(this.iv); this.iv = null;
+    if (s && s.watchId != null) { try { navigator.geolocation.clearWatch(s.watchId); } catch (e) { } s.watchId = null; }
+    if (this.wake) { this.wake.release().catch(() => { }); this.wake = null; }
+    try { speechSynthesis.cancel(); } catch (e) { }
+  },
+  close() { if (this.s) this.stop(); this.s = null; $('#run').hidden = true; $('#run').innerHTML = ''; document.body.style.overflow = ''; },
+  say(t) { if (!state.settings.voice || !('speechSynthesis' in window)) return; try { const u = new SpeechSynthesisUtterance(t); u.rate = 1.05; speechSynthesis.speak(u); } catch (e) { } },
+  beep(f, d) { const ac = this.ac; if (!ac) return; try { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = f; g.gain.setValueAtTime(.18, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + d); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + d); } catch (e) { } },
+  handle(el) {
+    const a = el.dataset.r, s = this.s; if (!s) return;
+    if (a === 'close') this.close();
+    else if (a === 'go') this.go(el.dataset.m);
+    else if (a === 'pause') { s.paused = !s.paused; s.lastTick = performance.now(); el.textContent = s.paused ? 'Resume' : 'Pause'; this.say(s.paused ? 'Paused' : 'Resumed'); }
+    else if (a === 'skip') this.nextStep(0);
+    else if (a === 'end') { $('#r-confirm').innerHTML = `<div class="confirm"><b>End this run now?</b><div class="btns"><button class="btn sm" data-r="keep">Keep going</button><button class="btn sm primary" data-r="endnow">End and review</button></div></div>`; }
+    else if (a === 'keep') $('#r-confirm').innerHTML = '';
+    else if (a === 'endnow') this.finish();
+    else if (a === 'speed') { s.speed = +el.dataset.v; el.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === el)); }
+    else if (a === 'discard') this.close();
+    else if (a === 'save') {
+      const fb = readFeedback($('#run'));
+      const rec = { ...s.rec, ...fb, date: today(), paceMiss: paceMissOf(s.rec.steps) };
+      const id = s.ses.id; this.close();
+      const adj = saveLog(id, rec); render(); sheetSession(id);
+      toast(adj ? 'Run saved. Your plan adapted.' : 'Run saved');
+    }
+  },
+};
+const hav = (a, b) => { const R = 6371e3, r = x => x * Math.PI / 180; const dLa = r(b.latitude - a.latitude), dLo = r(b.longitude - a.longitude); const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a.latitude)) * Math.cos(r(b.latitude)) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+const spokenPace = s => { const x = U() === 'mi' ? s * 1.609344 : s; const m = Math.floor(x / 60), r = Math.round(x % 60); return `${m} ${r ? (r < 10 ? 'oh ' + r : r) : 'flat'}`; };
+const spokenDur = s => s < 60 ? `${s} seconds` : s % 60 === 0 ? `${s / 60} minute${s === 60 ? '' : 's'}` : `${Math.floor(s / 60)} minutes ${s % 60} seconds`;
+
+/* =============== Onboarding =============== */
+let ob = null;
+function obDefaults(fromProfile) {
+  const t = today();
+  const p = fromProfile;
+  return p ? { step: 0, edit: true, goal: p.goal, level: p.level, weeklyKm: p.weeklyKm, fit: p.fitness.kind, fitMeters: p.fitness.meters || 5000, fitSec: p.fitness.seconds || p.fitness.fiveKSeconds || 1620,
+    hasTarget: !!p.targetSeconds, target: p.targetSeconds || 0, raceDate: p.raceDate, dateTouched: true, days: [...p.days], longDay: p.longDay, unit: state.settings.unit, watch: state.settings.watch }
+    : { step: 0, goal: 'half', level: 1, weeklyKm: 20, fit: 'estimate', fitMeters: 5000, fitSec: 27 * 60, hasTarget: false, target: 0, raceDate: defaultRace('half', t), dateTouched: false, days: [1, 3, 4, 6], longDay: 6, unit: state.settings.unit, watch: state.settings.watch };
+}
+function defaultRace(goal, t) { return E.addDays(E.mondayOf(t), E.SHAPE[goal].weeks[1] * 7 - 1); }
+function obProfile() {
+  const fitness = ob.fit === 'race' ? { kind: 'race', meters: ob.fitMeters, seconds: ob.fitSec } : ob.fit === 'new' ? { kind: 'new' } : { kind: 'estimate', fiveKSeconds: ob.fitSec };
+  return { goal: ob.goal, level: ob.fit === 'new' ? 0 : ob.level, fitness, targetSeconds: ob.hasTarget && ob.target > 0 ? ob.target : null, raceDate: ob.raceDate,
+    startDate: ob.edit && state.profile ? state.profile.startDate : today(), days: ob.days, longDay: ob.days.includes(ob.longDay) ? ob.longDay : ob.days[ob.days.length - 1], weeklyKm: ob.fit === 'new' ? 0 : ob.weeklyKm };
+}
+const OB_STEPS = ['goal', 'level', 'fitness', 'target', 'days', 'watch', 'summary'];
+function openOnboard(edit) { ob = obDefaults(edit ? state.profile : null); $('#onboard').hidden = false; document.body.style.overflow = 'hidden'; renderOb(); }
+function closeOnboard() { $('#onboard').hidden = true; $('#onboard').innerHTML = ''; ob = null; document.body.style.overflow = ''; }
+function renderOb() {
+  const k = OB_STEPS[ob.step];
+  const prog = OB_STEPS.slice(0, -1).map((_, i) => `<i class="${i <= ob.step ? 'on' : ''}"></i>`).join('');
+  let body = '', can = true, next = 'Continue';
+  if (k === 'goal') {
+    body = `<h1>What are you training for?</h1><p class="lead">Pick the race distance. You can change it later.</p>
+    <div class="opts">${[['5k', '5K', '6–12 weeks', 'Get faster over 5 km or run your first one'], ['10k', '10K', '8–14 weeks', 'Speed and stamina in balance'], ['half', 'Half', '10–16 weeks', '21.1 km of steady strength'], ['marathon', 'Full', '12–20 weeks', '42.2 km, the big one']].map(([g, b, w, d]) =>
+      `<button class="opt" data-o="goal" data-v="${g}" aria-pressed="${ob.goal === g}"><span class="big">${b}</span><span><div class="ot">${E.DIST_LABEL[g]} <span class="muted" style="font-weight:600">· ${w}</span></div><div class="od">${d}</div></span></button>`).join('')}</div>`;
+  } else if (k === 'level') {
+    body = `<h1>How much do you run now?</h1><p class="lead">This sets your starting volume so the first weeks feel right.</p>
+    <div class="opts">${[['Beginner', 'Running under a year, or coming back after a break'], ['Intermediate', 'Running regularly and have raced before'], ['Advanced', 'Years of consistent training and structured sessions']].map(([l, d], i) =>
+      `<button class="opt" data-o="level" data-v="${i}" aria-pressed="${ob.level === i}"><span><div class="ot">${l}</div><div class="od">${d}</div></span></button>`).join('')}</div>
+    <div class="card stack"><div class="row between"><label class="lbl" for="ob-wk">Current weekly distance</label><b class="num" id="ob-wkv">${ob.weeklyKm} km</b></div>
+      <input type="range" id="ob-wk" min="0" max="100" step="5" value="${ob.weeklyKm}" data-o="weekly"></div>`;
+  } else if (k === 'fitness') {
+    const [h, m, s] = hms(ob.fitSec);
+    body = `<h1>Where's your fitness today?</h1><p class="lead">Your paces come from this. A recent race is most accurate.</p>
+    <div class="seg">${[['race', 'Recent race'], ['estimate', 'Estimate 5K'], ['new', 'I’m new']].map(([v, l]) => `<button data-o="fit" data-v="${v}" aria-pressed="${ob.fit === v}">${l}</button>`).join('')}</div>
+    ${ob.fit === 'new' ? `<div class="check good"><b>We'll start with run–walk.</b>Short runs with walk breaks that grow each week until you're running continuously. No pace targets to worry about at first.</div>`
+      : `<div class="card stack">${ob.fit === 'race' ? `<div class="field"><label for="ob-fd">Race distance</label><select class="input" id="ob-fd" data-o="fitm">${[[5000, '5K'], [10000, '10K'], [21097.5, 'Half marathon'], [42195, 'Marathon']].map(([v, l]) => `<option value="${v}" ${+ob.fitMeters === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` : ''}
+        <div class="field"><span class="lbl">${ob.fit === 'race' ? 'Finish time' : 'Your best guess for a 5K today'}</span>${timeInputs('ob-ft', h, m, s)}</div>
+        <div class="muted" style="font-size:13px" id="ob-fitout">${fitLine()}</div></div>`}`;
+  } else if (k === 'target') {
+    const pr = obProfile(); let chk = '';
+    try { const pl = E.generate(pr); chk = pr.targetSeconds ? (pl.realistic ? `<div class="check good"><b>Achievable.</b> ${pl.N} weeks is enough to build toward ${E.fmtTime(pr.targetSeconds)}.</div>` : `<div class="check warn"><b>That's a big jump for ${pl.N} weeks.</b> We'll aim for about ${E.fmtTime(pl.suggestedTarget)} and adjust as you improve.</div>`) : `<div class="check"><b>Projected finish: ${E.fmtTime(pl.predicted)}</b> after ${pl.N} weeks of training.</div>`;
+      const wk = pl.N, sh = E.SHAPE[ob.goal].weeks; if (wk < sh[0]) chk += `<div class="check warn">Only ${wk} weeks to race day. ${sh[0]}+ is better for a ${E.DIST_LABEL[ob.goal].toLowerCase()}; the plan will be compressed.</div>`; else if (wk > sh[2] + 4) chk += `<div class="check warn">${wk} weeks is a long runway. Consider a later start or a tune-up race.</div>`; } catch (e) { chk = ''; can = false; }
+    const [h, m, s] = hms(ob.target || (ob.goal === 'marathon' ? 4 * 3600 : ob.goal === 'half' ? 2 * 3600 : ob.goal === '10k' ? 55 * 60 : 27 * 60));
+    body = `<h1>Race day and goal</h1><p class="lead">No race booked? Pick a target date and we'll treat it as one.</p>
+    <div class="field"><label for="ob-date">Race date</label><input type="date" class="input" id="ob-date" data-o="date" min="${E.addDays(today(), 14)}" value="${ob.raceDate}"></div>
+    <div class="seg">${[[false, 'Finish strong'], [true, 'Target time']].map(([v, l]) => `<button data-o="hastarget" data-v="${v}" aria-pressed="${ob.hasTarget === v}">${l}</button>`).join('')}</div>
+    ${ob.hasTarget ? `<div class="field"><span class="lbl">Target time</span>${timeInputs('ob-tt', h, m, s)}</div>` : ''}
+    <div class="stack" id="ob-check">${chk}</div>`;
+    can = ob.raceDate > E.addDays(today(), 13);
+  } else if (k === 'days') {
+    body = `<h1>When can you run?</h1><p class="lead">Choose 3 to 6 days. We'll space the hard sessions apart.</p>
+    <div class="days7">${WD.map((d, i) => `<button data-o="day" data-v="${i}" aria-pressed="${ob.days.includes(i)}">${d}</button>`).join('')}</div>
+    <div class="field"><label for="ob-long">Long run day</label><select class="input" id="ob-long" data-o="long">${ob.days.map(d => `<option value="${d}" ${ob.longDay === d ? 'selected' : ''}>${WD[d]}</option>`).join('')}</select></div>
+    <div class="muted" style="font-size:14px">${ob.days.length} runs a week${ob.days.length >= 5 ? ', with two quality sessions' : ', with one quality session'}.</div>`;
+    can = ob.days.length >= 3 && ob.days.length <= 6;
+  } else if (k === 'watch') {
+    body = `<h1>Your watch</h1><p class="lead">Every workout can be sent to your watch with pace targets on each step.</p>
+    <div class="opts">${[['both', 'Both', 'Garmin Venu 3S and Apple Watch'], ['garmin', 'Garmin Venu 3S', 'Workouts via Garmin Connect'], ['apple', 'Apple Watch', 'Workouts via the Workout app']].map(([v, t, d]) => `<button class="opt" data-o="watch" data-v="${v}" aria-pressed="${ob.watch === v}"><span><div class="ot">${t}</div><div class="od">${d}</div></span></button>`).join('')}</div>
+    <div class="field"><span class="lbl">Units</span><div class="seg">${['km', 'mi'].map(u => `<button data-o="unit" data-v="${u}" aria-pressed="${ob.unit === u}">${u === 'km' ? 'Kilometres' : 'Miles'}</button>`).join('')}</div></div>`;
+    next = 'Build my plan';
+  } else if (k === 'summary') {
+    const pr = obProfile(), pl = E.generate(pr), z = E.paceZones(pl.vdotStart);
+    const ph = pl.phases;
+    const firstQ = pl.weeks.flatMap(w => w.sessions).find(s => s.type === 'quality' || s.type === 'runwalk');
+    body = `<span class="eyebrow">Your plan is ready</span><h1>${pl.N} weeks to your ${E.DIST_LABEL[pr.goal].toLowerCase()}</h1>
+    <div class="summary-big"><div class="card"><div class="eyebrow">Projected</div><div class="h-display" style="font-size:36px">${E.fmtTime(pl.predicted)}</div></div>
+      <div class="card"><div class="eyebrow">Peak week</div><div class="h-display" style="font-size:36px">${E.fmtDist(pl.peakKm * 1000, ob.unit, 0)} <span style="font-size:20px">${ob.unit}</span></div></div></div>
+    <div class="card stack"><div class="phases">${['base', 'build', 'peak', 'taper'].filter(k => ph[k]).map(k => `<i style="flex:${ph[k]};background:var(--ph-${k})"></i>`).join('')}</div>
+      <div class="legend">${['base', 'build', 'peak', 'taper'].filter(k => ph[k]).map(k => `<span><i class="dot" style="background:var(--ph-${k})"></i>${k[0].toUpperCase() + k.slice(1)} ${ph[k]} wk</span>`).join('')}</div></div>
+    <div class="card" style="padding-block:6px">${['easy', 'threshold', 'interval'].map(k => `<div class="zrow"><span class="zbar" style="background:${zColor(k)}"></span><div class="zn">${E.ZONES[k].label}</div><div class="zp">${E.fmtPace(z[k][0], ob.unit)}–${E.fmtPace(z[k][1], ob.unit)} <small>/${ob.unit}</small></div></div>`).join('')}</div>
+    ${firstQ ? `<div class="note">First key session: <b>${esc(firstQ.title)}</b>, ${esc(firstQ.summary)}, on ${dayLabel(firstQ.date)}.</div>` : ''}`;
+    next = ob.edit ? 'Save changes' : 'Start training';
+  }
+  $('#onboard').innerHTML = `<div class="in"><div class="row between"><div class="prog" style="flex:1">${prog}</div><button class="x-btn" data-o="close" aria-label="Close">${ICON.close}</button></div>
+    ${body}<div class="foot">${ob.step > 0 ? '<button class="btn" data-o="back">Back</button>' : ''}<button class="btn primary" data-o="next" ${can ? '' : 'disabled'}>${next}</button></div></div>`;
+}
+function fitLine() {
+  if (ob.fit === 'new') return '';
+  const v = ob.fit === 'race' ? E.vdotFromRace(ob.fitMeters, ob.fitSec) : E.vdotFromRace(5000, ob.fitSec);
+  if (!isFinite(v) || v < 15 || v > 90) return 'Enter a realistic time.';
+  return `Fitness score ${v.toFixed(1)} · easy pace ${E.fmtPace(E.paceZones(v).easy[0], ob.unit)}–${E.fmtPace(E.paceZones(v).easy[1], ob.unit)} /${ob.unit}`;
+}
+function obHandle(el, ev) {
+  const a = el.dataset.o, v = el.dataset.v;
+  if (ev.type === 'click' && (el.tagName === 'SELECT' || el.type === 'range' || el.type === 'date')) return;
+  if (a === 'close') { if (!plan) { loadSample(); render(); } closeOnboard(); return; }
+  if (a === 'back') { ob.step--; renderOb(); return; }
+  if (a === 'next') {
+    if (OB_STEPS[ob.step] === 'summary') {
+      const pr = obProfile();
+      state.settings.unit = ob.unit; state.settings.watch = ob.watch;
+      if (ob.edit) state.profile = pr;
+      else state = { ...blank(), settings: state.settings, profile: pr };
+      const wasEdit = ob.edit;
+      state.sample = false; Store.save(); rebuild(); closeOnboard(); view = 'today'; selDay = null; location.hash = 'today'; render();
+      toast(wasEdit ? 'Plan updated' : 'Plan created'); return;
+    }
+    ob.step++; renderOb(); return;
+  }
+  if (a === 'goal') { ob.goal = v; if (!ob.dateTouched) ob.raceDate = defaultRace(v, today()); }
+  else if (a === 'level') ob.level = +v;
+  else if (a === 'weekly') { ob.weeklyKm = +el.value; $('#ob-wkv').textContent = ob.weeklyKm + ' km'; return; }
+  else if (a === 'fit') ob.fit = v;
+  else if (a === 'fitm') { ob.fitMeters = +el.value; $('#ob-fitout').textContent = fitLine(); return; }
+  else if (a === 'date') { if (el.value) { ob.raceDate = el.value; ob.dateTouched = true; } }
+  else if (a === 'hastarget') { ob.hasTarget = v === 'true'; if (ob.hasTarget && !ob.target) ob.target = ob.goal === 'marathon' ? 4 * 3600 : ob.goal === 'half' ? 2 * 3600 : ob.goal === '10k' ? 55 * 60 : 27 * 60; }
+  else if (a === 'day') { const d = +v; ob.days = ob.days.includes(d) ? ob.days.filter(x => x !== d) : [...ob.days, d].sort((x, y) => x - y); if (!ob.days.includes(ob.longDay) && ob.days.length) ob.longDay = ob.days.includes(6) ? 6 : ob.days[ob.days.length - 1]; }
+  else if (a === 'long') ob.longDay = +el.value;
+  else if (a === 'watch') ob.watch = v;
+  else if (a === 'unit') ob.unit = v;
+  renderOb();
+}
+
+/* =============== Toast =============== */
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2400); }
+
+/* =============== Events =============== */
+document.addEventListener('click', ev => {
+  const r = ev.target.closest('[data-r]'); if (r && $('#run').contains(r)) { if (r.type !== 'range') Run.handle(r); return; }
+  const o = ev.target.closest('[data-o]'); if (o && $('#onboard').contains(o)) { obHandle(o, ev); return; }
+  const el = ev.target.closest('[data-a]'); if (!el) return;
+  const a = el.dataset.a, id = el.dataset.id;
+  if (el.tagName === 'SELECT' || el.type === 'checkbox') return;
+  switch (a) {
+    case 'tab': view = el.dataset.view; location.hash = view; window.scrollTo(0, 0); render(); break;
+    case 'day': selDay = el.dataset.d; render(); break;
+    case 'open': sheetSession(id); break;
+    case 'close': closeSheet(); break;
+    case 'run': closeSheet(); Run.open(id); break;
+    case 'move': sheetMove(id); break;
+    case 'moveto': { const s = byId[id]; if (el.dataset.d === s.planDate) delete state.moves[id]; else state.moves[id] = el.dataset.d; Store.save(); rebuild(); closeSheet(); selDay = el.dataset.d; render(); toast(`Moved to ${dayLabel(el.dataset.d)}`); break; }
+    case 'skip': if (state.skipped[id]) delete state.skipped[id]; else state.skipped[id] = true; Store.save(); rebuild(); render(); sheetSession(id); break;
+    case 'unlog': delete state.log[id]; Store.save(); rebuild(); render(); sheetSession(id); toast('Result deleted'); break;
+    case 'manual': sheetManual(id); break;
+    case 'rpe': case 'feel': el.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === el)); break;
+    case 'manualsave': {
+      const panel = $('#sheet');
+      const dv = parseFloat(($('#ml-d', panel).value || '').replace(',', '.'));
+      const t = readTime('ml', panel);
+      if (!(dv > 0) || !(t > 0)) { toast('Enter a distance and a time.'); break; }
+      const m = U() === 'mi' ? dv * 1609.344 : dv * 1000;
+      const adj = saveLog(id, { date: today(), distance: m, duration: t, avgPace: t / m * 1000, splits: [], steps: [], source: 'watch', paceMiss: 0, ...readFeedback(panel) });
+      render(); sheetSession(id); toast(adj ? 'Run saved. Your plan adapted.' : 'Run saved'); break;
+    }
+    case 'export': sheetExport(id); break;
+    case 'exptab': exportTab = el.dataset.t; sheetExport(id); break;
+    case 'copy': copyText($('#code').textContent); break;
+    case 'savefile': { const s = byId[id]; const t = exportTab; saveFile(`${s.date}-${s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}${t === 'apple' ? '.swift' : '.json'}`, $('#code').textContent); break; }
+    case 'exportplan': {
+      const data = JSON.stringify({ app: 'Pacekeeper', version: 1, profile: state.profile, generatedAt: new Date().toISOString(), sessions: sessions.map(s => ({ ...appJSON(s), log: s.log || null, skipped: s.skipped })) }, null, 2);
+      if (downloads) saveFile('pacekeeper-plan.json', data); else { openSheet(`${sheetHead('Export', 'Plan JSON')}<pre class="code" id="code">${esc(data)}</pre><button class="btn primary" data-a="copy">Copy</button>`); }
+      break;
+    }
+    case 'dismiss': state.dismissed[el.dataset.k] = true; Store.save(); render(); break;
+    case 'onboard': openOnboard(false); break;
+    case 'edit': openOnboard(true); break;
+    case 'unit': state.settings.unit = el.dataset.u; Store.save(); render(); break;
+    case 'shift': state.settings.dayOffset = +el.dataset.n === 0 ? 0 : (state.settings.dayOffset || 0) + +el.dataset.n; selDay = null; Store.save(); render(); break;
+    case 'reset': $('#reset-confirm').hidden = false; break;
+    case 'reset-no': $('#reset-confirm').hidden = true; break;
+    case 'reset-yes': try { localStorage.removeItem(KEY); } catch (e) { } state = blank(); loadSample(); Store.save(); render(); openOnboard(false); break;
+    case 'raceupdate': {
+      const m = +$('#rr-d').value, t = readTime('rr');
+      const v = E.vdotFromRace(m, t);
+      if (!t || !isFinite(v) || v < 15 || v > 90) { toast('Enter a realistic race time.'); break; }
+      const delta = v - currentVdot();
+      state.adjust.push({ from: today(), vdot: +delta.toFixed(2), volume: 1, reason: `New ${{ 5000: '5K', 10000: '10K', 21097.5: 'half marathon', 42195: 'marathon' }[m]} result of ${E.fmtTime(t)}. Paces recalculated.`, at: Date.now() });
+      Store.save(); rebuild(); render(); toast(`Fitness ${delta >= 0 ? 'up' : 'down'} ${Math.abs(delta).toFixed(1)}`); break;
+    }
+  }
+});
+document.addEventListener('change', ev => {
+  const el = ev.target;
+  if (el.dataset.o && ob) obHandle(el, ev);
+  else if (el.dataset.a === 'voice') { state.settings.voice = el.checked; Store.save(); }
+  else if (el.dataset.a === 'watch') { state.settings.watch = el.value; exportTab = null; Store.save(); }
+});
+document.addEventListener('input', ev => {
+  const el = ev.target;
+  if (el.dataset.o === 'weekly') obHandle(el, ev);
+  if (el.dataset.r === 'effort' && Run.s) { Run.s.effort = +el.value; const t = $('#r-effv'); if (t) t.textContent = Run.s.effort ? (Run.s.effort > 0 ? '+' : '') + Run.s.effort + ' s/km' : 'On target'; }
+  if (ob && el.id && el.id.startsWith('ob-ft-')) { ob.fitSec = readTime('ob-ft'); const o = $('#ob-fitout'); if (o) o.textContent = fitLine(); }
+  if (ob && el.id && el.id.startsWith('ob-tt-')) { ob.target = readTime('ob-tt'); }
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['today', 'plan', 'paces', 'you'].includes(h) && h !== view) { view = h; render(); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Run.s && Run.s.phase === 'run' && navigator.wakeLock && !Run.wake) navigator.wakeLock.request('screen').then(w => Run.wake = w).catch(() => { }); });
+
+/* =============== Boot =============== */
+const saved = Store.loadLocal();
+if (saved && saved.profile) state = { ...blank(), ...saved, settings: { ...blank().settings, ...saved.settings } };
+else loadSample();
+rebuild();
+const h0 = location.hash.slice(1); if (['today', 'plan', 'paces', 'you'].includes(h0)) view = h0;
+render();
+Store.connect();
+if (window.claude && typeof window.claude.use === 'function') window.claude.use('downloads').then(d => { downloads = d; }).catch(() => { });
+})();
+</script>
+</body></html>
